@@ -1,9 +1,8 @@
 #lang racket/base
 
-(require vulkan/unsafe)
-(require glfw3)
+(require "../lib/vulkan.rkt")
+(require "../lib/glfw3.rkt")
 (require ffi/unsafe)
-(require "util/util.rkt")
 
 
 (provide create-instance
@@ -21,34 +20,23 @@
 
 
 ; Comprueba si estan disponibles los layers deseados
-(define (check-required-layers layers)
+(define (check-required-layers required-layers)
 
   ; Cogemos los layers disponibles
-  (define available-layers-count-ptr (malloc _uint32))
-  (vkEnumerateInstanceLayerProperties available-layers-count-ptr #f)
-  (define available-layers-count (ptr-ref available-layers-count-ptr _uint32))
-  (define available-layers (malloc _VkLayerProperties available-layers-count))
-  (vkEnumerateInstanceLayerProperties available-layers-count-ptr available-layers)
+  (define available-layer-properties (vkEnumerateInstanceLayerProperties))
   
   ; Comprobamos que los layers requeridos estan disponibles
-  (for/and ([layer layers])
-    (for/or ([j (build-list available-layers-count (λ (x) x))])
-      (define aval-layer (ptr-ref available-layers _VkLayerProperties j))
-      (zero? (strcmp layer (array-ptr (VkLayerProperties-layerName aval-layer)))))))
+  (for/and ([required-layer required-layers])
+    (for/or ([layer-property available-layer-properties])
+      (define available-layer (cast (array-ptr (VkLayerProperties-layerName layer-property)) _pointer _bytes))
+      (equal? required-layer available-layer))))
 
 
 
 ; Retorna las extensiones deseadas
 (define (get-required-extensions)
 
-  ; Obtenemos las extensiones requeridas de glfw
-  (define glfw-ext-count-ptr (malloc _uint32))
-  (define glfw-extensions (glfwGetRequiredInstanceExtensions glfw-ext-count-ptr))
-  (define glfw-ext-count (ptr-ref glfw-ext-count-ptr _uint32))
-
-  ; Devolvemos las extensiones en una lista
-  (for/list ([j (build-list glfw-ext-count values)])
-    (ptr-ref glfw-extensions _bytes j)))
+  (glfwGetRequiredInstanceExtensions))
 
 
 
