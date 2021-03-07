@@ -1,7 +1,7 @@
 #lang racket/base
 
 
-(require "../lib/glfw3/glfw-vulkan.rkt")
+(require "../lib/glfw3.rkt")
 
 
 (provide glfw-init

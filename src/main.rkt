@@ -1,16 +1,20 @@
 #lang racket/base
 
-(require "glfw.rkt")
-;         "instance.rkt"
+(require "glfw.rkt"
+         "../lib/vulkan.rkt"
+         "instance.rkt"
 ;         "surface.rkt"
 ;         "device.rkt"
 ;         "window.rkt"
 ;         "queue.rkt"
-;         "command-pool.rkt")
+;         "command-pool.rkt"
+         )
 
 (glfw-init)
 
-;(define instance (create-instance #t))
+(check-vkResult VK_SUCCESS 'ploplo)
+
+(define instance (create-instance #t))
 ;(define window (create-window "Hola" 640 480))
 ;(define surface (create-surface instance window))
 ;(define-values (physical-device device graphics-index transfer-index compute-index present-index)
@@ -36,7 +40,7 @@
 ;(destroy-device device)
 ;(destroy-surface instance surface)
 ;(destroy-window window)
-;(destroy-instance instance)
+(destroy-instance instance)
 
 (glfw-terminate)
 
