@@ -1,13 +1,10 @@
 #lang racket/base
 
-(require "unsafe.rkt"
-         racket/stream
+(require racket/stream
          ffi/unsafe)
 
 
-(provide (all-from-out "unsafe.rkt")
-         array->bytes
-         (rename-out [cvector-aux cvector]))
+(provide array->bytes)
 
 
 ;Convierte un array de caracteres en un string de bytes
