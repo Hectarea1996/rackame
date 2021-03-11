@@ -3,8 +3,9 @@
 (require "array.rkt"
          "cvar.rkt"
          vulkan/unsafe
+         glfw3/vulkan
          ffi/unsafe
-         ffi/unsafe/alloc)
+         ffi/cvector)
 
 
 (provide create-instance
@@ -39,7 +40,8 @@
 
 ; Retorna las extensiones deseadas
 (define (get-required-extensions)
-  (glfwGetRequiredInstanceExtensions))
+  (map (λ (extension-name)
+         (cast extension-name _string/utf-8 _bytes/nul-terminated)) (glfwGetRequiredInstanceExtensions)))
 
 
 
@@ -54,7 +56,7 @@
 
   ; Comprobamos que las extensiones requeridas esten disponibles
   (for/and ([required-extension required-extensions])
-    (for/or ([property properties])
+    (for/or ([property (cvector->list properties)])
       (equal? required-extension (array->bytes (VkExtensionProperties-extensionName property))))))
 
 
@@ -81,7 +83,7 @@
   (define required-extensions (get-required-extensions))
   (define required-extensions-count (length required-extensions))
   (when (not (check-required-extensions required-extensions))
-    (error "Required extensions not supported"))
+    (error 'create-instance "Required extensions not supported"))
 
   ;Instance
   (define instance-info (make-VkInstanceCreateInfo VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO
@@ -89,15 +91,18 @@
                                                    0
                                                    app-info
                                                    required-layers-count
-                                                   (cvector-ptr (list->cvector required-layers _bytes))
+                                                   (if (null? required-layers)
+                                                       #f
+                                                       (cvector-ptr (list->cvector required-layers _bytes/nul-terminated)))
                                                    required-extensions-count
-                                                   (cvector-ptr (list->cvector required-extensions _bytes))))
+                                                   (if (null? required-extensions)
+                                                       #f
+                                                       (cvector-ptr (list->cvector required-extensions _bytes/nul-terminated)))))
 
   (define instance (make-cvar _VkInstance))
-  (define result (((allocator destroy-instance) (λ ()
-                                                  (vkCreateInstance instance-info #f (cvar-ptr instance))))))
+  (define result (vkCreateInstance instance-info #f (cvar-ptr instance)))
   (check-vkResult result 'create-instance)
-  instance)
+  (cvar-ref instance))
 
 
 

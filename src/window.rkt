@@ -1,7 +1,8 @@
 #lang racket/base
 
 
-(require glfw3)
+(require glfw3
+         ffi/unsafe/alloc)
 
 
 (provide create-window

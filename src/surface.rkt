@@ -1,6 +1,6 @@
 #lang racket/base
 
-(require glfw3)
+(require glfw3/vulkan)
 (require vulkan/unsafe)
 (require ffi/unsafe)
 
@@ -11,16 +11,12 @@
 
 
 ; Crea la surface
-(define (create-surface instance window-ptr)
+(define (create-surface instance window)
 
-  ; Holder de la surface
-  (define surface-ptr (malloc _VkSurfaceKHR))
+  (define-values (surface-result surface) (glfwCreateWindowSurface instance window #f))
+  (check-vkResult surface-result 'create-surface)
 
-  (define surface-result (glfwCreateWindowSurface instance window-ptr #f surface-ptr))
-  (when (not (equal? surface-result VK_SUCCESS))
-    (error 'create-surface "Error al crear VkSurfaceKHR"))
-
-  (ptr-ref surface-ptr _VkSurfaceKHR))
+  surface)
 
 
 

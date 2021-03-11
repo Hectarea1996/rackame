@@ -9,7 +9,7 @@
 
 ;Convierte un array de caracteres en un string de bytes
 (define (array->bytes arr)
-  (cast (array-ptr arr) _pointer _bytes))
+  (cast (array-ptr arr) _pointer _bytes/nul-terminated))
 
 
 

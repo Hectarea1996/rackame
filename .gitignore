@@ -6,3 +6,4 @@ src/util/compiled/
 src/util/*.bak
 src/*.bak
 src/sandbox.*
+src/*.exe
