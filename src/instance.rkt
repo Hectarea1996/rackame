@@ -1,9 +1,8 @@
 #lang racket/base
 
-(require "../lib/vulkan.rkt"
-         "../lib/glfw3.rkt"
-         "array.rkt"
+(require "array.rkt"
          "cvar.rkt"
+         vulkan/unsafe
          ffi/unsafe
          ffi/unsafe/alloc)
 

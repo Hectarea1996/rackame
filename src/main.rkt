@@ -1,13 +1,13 @@
 #lang racket/base
 
 (require "glfw.rkt"
-         "../lib/vulkan.rkt"
          "instance.rkt"
 ;         "surface.rkt"
 ;         "device.rkt"
 ;         "window.rkt"
 ;         "queue.rkt"
 ;         "command-pool.rkt"
+         vulkan/unsafe
          )
 
 (glfw-init)
