@@ -2,7 +2,7 @@
 
 
 (require "physical-device.rkt"
-         "util/util.rkt"
+         "cvar.rkt"
          vulkan/unsafe
          ffi/unsafe
          racket/list)
@@ -32,9 +32,9 @@
     (define actual-compute (if (> (bitwise-and (VkQueueFamilyProperties-queueFlags family-property) VK_QUEUE_COMPUTE_BIT) 0)
                                 i
                                 #f))
-    (define actual-present (let ([present-queue-ptr (malloc _VkBool32)])
-                             (vkGetPhysicalDeviceSurfaceSupportKHR physical-device i surface present-queue-ptr)
-                             (if (equal? (ptr-ref present-queue-ptr _VkBool32) VK_TRUE)
+    (define actual-present (let ([present-queue (make-cvar _VkBool32)])
+                             (vkGetPhysicalDeviceSurfaceSupportKHR physical-device i surface (cvar-ptr present-queue))
+                             (if (equal? (cvar-ref present-queue) VK_TRUE)
                                  i
                                  #f)))
     
@@ -46,9 +46,9 @@
 
 
 ; Metodo para comprobar las caracteristics existentes en un dispositivo
-(define (features-checker features-ptr)
-  (and (equal? (VkPhysicalDeviceFeatures-geometryShader features-ptr) VK_TRUE)
-       (equal? (VkPhysicalDeviceFeatures-samplerAnisotropy features-ptr) VK_TRUE)))
+(define (features-checker features)
+  (and (equal? (VkPhysicalDeviceFeatures-geometryShader features) VK_TRUE)
+       (equal? (VkPhysicalDeviceFeatures-samplerAnisotropy features) VK_TRUE)))
 
 
 
@@ -75,16 +75,15 @@
   (define family-indices (remove-duplicates (list graphics-index transfer-index compute-index present-index)))
 
   ; Generamos los create-info de cada familia de colas
-  (define priority-ptr (malloc _float))
-  (ptr-set! priority-ptr _float 1.0)      ; Creo que esta asignacion es inevitable
-  (define queue-create-infos-ptr
+  (define priority (cvar _float 1.0))
+  (define queue-create-infos
     (for/list ([family-index family-indices])
       (make-VkDeviceQueueCreateInfo VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO
                                     #f
                                     0
                                     family-index
                                     1
-                                    priority-ptr)))
+                                    (cvar-ptr priority))))
 
   ; Indicamos las caracteristicas deseadas
   (define device-features-ptr (make-VkPhysicalDeviceFeatures VK_FALSE      ;robustBufferAccess
@@ -148,21 +147,21 @@
   (define device-create-info (make-VkDeviceCreateInfo VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO
                                                       #f
                                                       0
-                                                      (length queue-create-infos-ptr)
-                                                      (cast (list->cblock queue-create-infos-ptr _VkDeviceQueueCreateInfo)
+                                                      (length queue-create-infos)
+                                                      (cast (list->cblock queue-create-infos _VkDeviceQueueCreateInfo)
                                                             _pointer
                                                             _VkDeviceQueueCreateInfo-pointer)
                                                       0
                                                       #f
                                                       (length device-extensions)
-                                                      (list->cblock device-extensions _bytes)
+                                                      (list->cblock device-extensions _bytes/nul-terminated)
                                                       device-features-ptr))
 
-  (define device-ptr (malloc _VkDevice))
-  (define device-result (vkCreateDevice physical-device device-create-info #f device-ptr))
-  (define device (ptr-ref device-ptr _VkDevice))
+  (define device (make-cvar _VkDevice))
+  (define device-result (vkCreateDevice physical-device device-create-info #f (cvar-ptr device)))
+  (check-vkResult device-result 'create-device)
 
-  (values physical-device device graphics-index transfer-index compute-index present-index))
+  (values physical-device (cvar-ref device) graphics-index transfer-index compute-index present-index))
 
 
 

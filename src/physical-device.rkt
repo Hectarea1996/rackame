@@ -23,10 +23,10 @@
   (define physical-device-count (make-cvar _uint32))
   (define count-result (vkEnumeratePhysicalDevices instance (cvar-ptr physical-device-count) #f))
   (check-vkResult count-result 'enumerate-physical-devices)
-  (when (not (> physical-device-count 0))
+  (when (not (> (cvar-ref physical-device-count) 0))
     (error 'enumerate-physical-devices "No physical devices found"))
-  (define physical-devices (make-cvector _VkPhysicalDevice (cvar-ref (cvar-ref physical-device-count))))
-  (vkEnumeratePhysicalDevices instance (cvar-ref physical-device-count) (cvector-ptr physical-devices))
+  (define physical-devices (make-cvector _VkPhysicalDevice (cvar-ref physical-device-count)))
+  (vkEnumeratePhysicalDevices instance (cvar-ptr physical-device-count) (cvector-ptr physical-devices))
   (cvector->list physical-devices))
 
 
@@ -90,8 +90,8 @@
     (define current-flags (bitwise-and (VkQueueFamilyProperties-queueFlags family-property) required-flags))
     (define present-queue (make-cvar _VkBool32))
     (vkGetPhysicalDeviceSurfaceSupportKHR physical-device i surface (cvar-ptr present-queue))
-    (define current-present-queue (or saved-present-queue (cvar-ref present-queue)))
-    (values current-flags current-present-queue (and (equal? current-flags required-flags) (equal? current-present-queue VK_TRUE)))))
+    (define current-present-queue (or saved-present-queue (equal? (cvar-ref present-queue) VK_TRUE)))
+    (values current-flags current-present-queue (and (equal? current-flags required-flags) current-present-queue))))
 
 
 ; --- device features ---
@@ -103,7 +103,7 @@
   (define features (make-cvar _VkPhysicalDeviceFeatures))
   (vkGetPhysicalDeviceFeatures physical-device (cvar-ptr features))
 
-  (checker (cvar-ptr features)))
+  (checker (cvar-ref features)))
 
 
 ; --- surface presentation ---
@@ -124,7 +124,7 @@
 
   (define format-count (make-cvar _uint32))
   (vkGetPhysicalDeviceSurfaceFormatsKHR physical-device surface (cvar-ptr format-count) #f)
-  (define formats (make-cvector _VkSurfaceFormatKHR format-count))
+  (define formats (make-cvector _VkSurfaceFormatKHR (cvar-ref format-count)))
   (vkGetPhysicalDeviceSurfaceFormatsKHR physical-device surface (cvar-ptr format-count) (cvector-ptr formats))
 
   (cvector->list formats))
@@ -136,7 +136,7 @@
 
   (define mode-count (make-cvar _uint32))
   (vkGetPhysicalDeviceSurfacePresentModesKHR physical-device surface (cvar-ptr mode-count) #f)
-  (define present-modes (make-cvector _VkPresentModeKHR mode-count))
+  (define present-modes (make-cvector _VkPresentModeKHR (cvar-ref mode-count)))
   (vkGetPhysicalDeviceSurfacePresentModesKHR physical-device surface (cvar-ptr mode-count) (cvector-ptr present-modes))
 
   (cvector->list present-modes))
