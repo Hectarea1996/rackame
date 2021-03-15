@@ -115,7 +115,7 @@
   (define capabilities (make-cvar _VkSurfaceCapabilitiesKHR))
   (vkGetPhysicalDeviceSurfaceCapabilitiesKHR physical-device surface (cvar-ptr capabilities))
 
-  (cvar-ptr capabilities))
+  (cvar-ref capabilities))
 
 
 

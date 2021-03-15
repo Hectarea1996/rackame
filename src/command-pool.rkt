@@ -1,8 +1,8 @@
 #lang racket/base
 
 
-(require vulkan/unsafe)
-(require ffi/unsafe)
+(require "cvar.rkt"
+         vulkan/unsafe)
 
 
 (provide create-command-pool
@@ -18,12 +18,11 @@
                                                           0
                                                           index-family))
 
-  (define command-pool-ptr (malloc _VkCommandPool))
-  (define command-pool-result (vkCreateCommandPool device command-pool-info #f command-pool-ptr))
-  (when (not (equal? command-pool-result VK_SUCCESS))
-      (error 'create-command-pool "Error al crear el command pool."))
+  (define command-pool (make-cvar _VkCommandPool))
+  (define command-pool-result (vkCreateCommandPool device command-pool-info #f (cvar-ptr command-pool)))
+  (check-vkResult command-pool-result 'create-command-pool)
 
-  (ptr-ref command-pool-ptr _VkCommandPool))
+  (cvar-ref command-pool))
 
 
 

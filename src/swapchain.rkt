@@ -1,10 +1,16 @@
 #lang racket/base
 
 
-(require "physical-device.rkt")
-(require vulkan/unsafe)
-(require ffi/unsafe)
-(require glfw3)
+(require "physical-device.rkt"
+         "cvar.rkt"
+         ffi/unsafe
+         ffi/cvector
+         vulkan/unsafe
+         glfw3)
+
+
+(provide create-swapchain
+         destroy-swapchain)
 
 
 ; El maximo valor de un entero de 32 bits
@@ -54,15 +60,14 @@
 
   (if (not (equal? (VkExtent2D-width (VkSurfaceCapabilitiesKHR-currentExtent surface-capabilities)) UINT32_MAX))
       (VkSurfaceCapabilitiesKHR-currentExtent surface-capabilities)
-      (let ([win-width-ptr (malloc _int)] [win-height-ptr (malloc _int)])
-        (glfwGetWindowSize win-width win-height)
-        (define-values (win-width win-height) (values (ptr-ref win-width-ptr _int) (ptr-ref win-height-ptr _int)))
+      (let ([win-width (make-cvar _int)] [win-height (make-cvar _int)])
+        (glfwGetWindowSize (cvar-ptr win-width) (cvar-ptr win-height))
         (make-VkExtent2D (max (VkExtent2D-width (VkSurfaceCapabilitiesKHR-minImageExtent surface-capabilities))
                               (min (VkExtent2D-width (VkSurfaceCapabilitiesKHR-maxImageExtent surface-capabilities))
-                                   (cast win-width _int _uint32)))
+                                   (cast (cvar-ref win-width) _int _uint32)))
                          (max (VkExtent2D-height (VkSurfaceCapabilitiesKHR-minImageExtent surface-capabilities))
                               (min (VkExtent2D-height (VkSurfaceCapabilitiesKHR-maxImageExtent surface-capabilities))
-                                   (cast win-height _int _uint32)))))))
+                                   (cast (cvar-ref win-height) _int _uint32)))))))
 
 
 
@@ -86,13 +91,13 @@
       (add1 (VkSurfaceCapabilitiesKHR-minImageCount surface-capabilities))))
 
 
-
+(require racket/trace)
 ; Crea un swapchain
 (define (create-swapchain physical-device device surface window graphics-index present-index)
 
   (define format (choose-format physical-device surface))
   (define present-mode (choose-present-mode physical-device surface))
-  (define extent (choose-extent physical-device surface))
+  (define extent (choose-extent physical-device surface window))
   (define pre-transform (choose-pre-transform physical-device surface))
   (define image-count (choose-image-count physical-device surface))
   
@@ -119,31 +124,50 @@
                                                         VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR
                                                         present-mode
                                                         VK_TRUE
-                                                        VK_NULL_HANDLE))
+                                                        #f))  ;Esto deberia ser VK_NULL_HANDLE
 
-  (define swapchain-ptr (malloc _VkSwapchainKHR))
-  (define swapchain-result (vkCreateSwapchainKHR device swapchain-info #f swapchain-ptr))
-  (when (not (equal? swapchain-result VK_SUCCESS))
-    (error 'create-swapchain "Error al crear el swapchain."))
+  (define swapchain (make-cvar _VkSwapchainKHR))
+  (define swapchain-result (vkCreateSwapchainKHR device swapchain-info #f (cvar-ptr swapchain)))
+  (check-vkResult swapchain-result 'create-swapchain)
 
-  (ptr-ref swapchain-ptr _VkSwapchainKHR))
+  ;Obtenemos las imagenes
+  (define true-image-count (make-cvar _uint32))
+  (vkGetSwapchainImagesKHR device (cvar-ref swapchain) (cvar-ptr true-image-count) #f)
+  (define images (make-cvector _VkImage (cvar-ref true-image-count)))
+  (vkGetSwapchainImagesKHR device (cvar-ref swapchain) (cvar-ptr true-image-count) (cvector-ptr images))
+
+  ;Creamos las imageviews
+  (define image-views (for/list ([i (build-list image-count values)])
+                        (define image-view-info (make-VkImageViewCreateInfo VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO
+                                                                            #f
+                                                                            0
+                                                                            (cvector-ref images 0)
+                                                                            VK_IMAGE_VIEW_TYPE_2D
+                                                                            (VkSurfaceFormatKHR-format format)
+                                                                            (make-VkComponentMapping VK_COMPONENT_SWIZZLE_IDENTITY
+                                                                                                     VK_COMPONENT_SWIZZLE_IDENTITY
+                                                                                                     VK_COMPONENT_SWIZZLE_IDENTITY
+                                                                                                     VK_COMPONENT_SWIZZLE_IDENTITY)
+                                                                            (make-VkImageSubresourceRange VK_IMAGE_ASPECT_COLOR_BIT
+                                                                                                          0
+                                                                                                          1
+                                                                                                          0
+                                                                                                          1)))
+                        (define image-view (make-cvar _VkImageView))
+                        (define view-result (vkCreateImageView device image-view-info #f (cvar-ptr image-view)))
+                        (check-vkResult view-result 'create-swapchain)
+                        (cvar-ref image-view)))
+
+  ;Retornamos todo
+  (values (cvar-ref swapchain) (cvector->list images) image-views))
 
 
 
-; Destruye un swapchain
-(define (destroy-swapchain device swapchain)
+; Destruye un swapchain y las imageviews
+(define (destroy-swapchain device swapchain image-views)
+
+  (for ([image-view image-views])
+    (vkDestroyImageView device image-view #f))
 
   (vkDestroySwapchainKHR device swapchain #f))
 
-
-
-; Devuelve las imagenes de un swapchain
-(define (get-swapchain-images device swapchain)
-
-  (define image-count-ptr (malloc _uint32))
-  (vkGetSwapchainImagesKHR device swapchain image-count-ptr #f)
-  (define image-count (ptr-ref image-count-ptr _uint32))
-  (define images-ptr (malloc _VkImage image-count))
-  (vkGetSwapchainImagesKHR device swapchain image-count-ptr images-ptr)
-
-  (cblock->list images-ptr _VkImage image-count))
