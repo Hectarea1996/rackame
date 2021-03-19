@@ -1,8 +1,9 @@
 #lang racket/base
 
 
-(require vulkan/unsafe)
-(require ffi/unsafe)
+(require vulkan/unsafe
+         ffi/unsafe
+         ffi/cvector)
 
 
 ; Devuelve una lista con un numero count de buffers de comandos primarios.
@@ -14,16 +15,18 @@
                                                           VK_COMMAND_BUFFER_LEVEL_PRIMARY
                                                           count))
 
-  (define command-buffers-ptr (malloc _VkCommandBuffer count))
-  (define allocate-result (vkAllocateCommandBuffers device allocate-info command-buffers-ptr))
-  (cblock->list command-buffers-ptr _VkCommandBuffer count))
+  (define command-buffers (make-cvector _VkCommandBuffer count))
+  (define allocate-result (vkAllocateCommandBuffers device allocate-info (cvector-ptr command-buffers)))
+  (cvector->list command-buffers))
 
 
+
+;REVISAR, free-command-buffer deberia recibir el mismo puntero que devuelve allocate-primary-command-buffer
 
 ; Libera la memoria de los buffers de comandos 
 (define (free-command-buffer device command-pool command-buffers)
 
-  (vkFreeCommandBuffers device command-pool (length command-buffers) (list->cblock command-buffers _VkCommandBuffer)))
+  (vkFreeCommandBuffers device command-pool (length command-buffers) (cvector-ptr (list->cvector command-buffers _VkCommandBuffer))))
 
 
 
