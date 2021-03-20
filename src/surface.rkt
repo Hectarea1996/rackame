@@ -1,25 +1,35 @@
 #lang racket/base
 
-(require glfw3/vulkan)
-(require vulkan/unsafe)
-(require ffi/unsafe)
+(require "instance.rkt"
+         glfw3/vulkan
+         vulkan/unsafe
+         ffi/unsafe)
 
 
-(provide create-surface
-         destroy-surface)
+(provide rkm-create-surface
+         rkm-surface?
+         rkm-surface-vk-surface
+         rkm-destroy-surface)
 
+
+; struct surface
+(struct rkm-surface
+  (vk-instance
+   vk-surface))
 
 
 ; Crea la surface
-(define (create-surface instance window)
+(define (rkm-create-surface instance glfw-window)
 
-  (define-values (surface-result surface) (glfwCreateWindowSurface instance window #f))
+  (define vk-instance (rkm-instance-vk-instance instance))
+  (define-values (surface-result vk-surface) (glfwCreateWindowSurface vk-instance glfw-window #f))
   (check-vkResult surface-result 'create-surface)
 
-  surface)
+  (rkm-surface vk-instance
+               vk-surface))
 
 
 
 ; Destruye la surface
-(define (destroy-surface instance surface)
-  (vkDestroySurfaceKHR instance surface #f))
+(define (rkm-destroy-surface surface)
+  (vkDestroySurfaceKHR (rkm-surface-vk-instance surface) (rkm-surface-vk-surface surface) #f))

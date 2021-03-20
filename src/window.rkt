@@ -1,22 +1,35 @@
 #lang racket/base
 
 
-(require glfw3
+(require "surface.rkt"
+         glfw3/vulkan
          ffi/unsafe/alloc)
 
 
-(provide create-window
-         destroy-window)
+(provide rkm-create-window
+         rkm-window?
+         rkm-window-glfw-window
+         rkm-destroy-window)
+
+
+; Window struct
+(struct rkm-window
+  (glfw-window
+   surface))
 
 
 ; Crea una ventana
-(define (create-window name width height)
+(define (rkm-create-window instance name width height)
   (glfwWindowHint GLFW_CLIENT_API GLFW_NO_API)
   (glfwWindowHint GLFW_RESIZABLE GLFW_FALSE)
-  (glfwCreateWindow width height name #f #f))
+  (define glfw-window (glfwCreateWindow width height name #f #f))
+  (define surface (rkm-create-surface instance glfw-window))
+  
+  (rkm-window glfw-window surface))
 
 
 
 ; Destruye una ventana
-(define (destroy-window window-ptr)
-  (glfwDestroyWindow window-ptr))
+(define (rkm-destroy-window window)
+  (rkm-destroy-surface (rkm-window-surface window))
+  (glfwDestroyWindow (rkm-window-glfw-window window)))

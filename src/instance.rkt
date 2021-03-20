@@ -8,16 +8,17 @@
          ffi/cvector)
 
 
-(provide create-instance
-         destroy-instance
-         (rename-out [rkm-instance-layers get-instance-layers]
-                     [rkm-instance-extensions get-instance-extensions]
-                     [rkm-instance? instance?]))
+(provide rkm-create-instance
+         rkm-destroy-instance
+         rkm-instance-layers
+         rkm-instance-extensions
+         rkm-instance-vk-instance
+         rkm-instance?)
 
 
 ; Instance struct
 (struct rkm-instance
-  (instance
+  (vk-instance
    layers
    extensions))
 
@@ -70,7 +71,7 @@
 
 
 ; Crea la instancia de vulkan y retorna el destructor
-(define (create-instance validation)
+(define (rkm-create-instance validation)
 
   ; Application info
   (define app-info (make-VkApplicationInfo VK_STRUCTURE_TYPE_APPLICATION_INFO
@@ -117,5 +118,5 @@
 
 
 ; Destruye la instancia
-(define (destroy-instance s-instance)
-  (vkDestroyInstance (rkm-instance-instance s-instance) #f))
+(define (rkm-destroy-instance instance)
+  (vkDestroyInstance (rkm-instance-vk-instance instance) #f))
