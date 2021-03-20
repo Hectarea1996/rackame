@@ -10,8 +10,16 @@
 
 (provide create-instance
          destroy-instance
-         (rename-out [get-required-layers get-enabled-layers]
-                     [get-required-extensions get-enabled-extensions]))
+         (rename-out [rkm-instance-layers get-instance-layers]
+                     [rkm-instance-extensions get-instance-extensions]
+                     [rkm-instance? instance?]))
+
+
+; Instance struct
+(struct rkm-instance
+  (instance
+   layers
+   extensions))
 
 
 ; Lista de layers deseados
@@ -102,10 +110,12 @@
   (define instance (make-cvar _VkInstance))
   (define result (vkCreateInstance instance-info #f (cvar-ptr instance)))
   (check-vkResult result 'create-instance)
-  (cvar-ref instance))
+  (rkm-instance (cvar-ref instance)
+                required-layers
+                required-extensions))
 
 
 
 ; Destruye la instancia
-(define (destroy-instance instance)
-  (vkDestroyInstance instance #f))
+(define (destroy-instance s-instance)
+  (vkDestroyInstance (rkm-instance-instance s-instance) #f))

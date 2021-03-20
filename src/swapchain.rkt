@@ -91,7 +91,6 @@
       (add1 (VkSurfaceCapabilitiesKHR-minImageCount surface-capabilities))))
 
 
-(require racket/trace)
 ; Crea un swapchain
 (define (create-swapchain physical-device device surface window graphics-index present-index)
 
