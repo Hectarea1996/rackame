@@ -10,7 +10,16 @@
 
 (provide (except-out (all-defined-out)
                      get-family-indices
-                     features-checker))
+                     features-checker
+                     get-device-queue))
+
+
+; struct device
+(struct rkm-device
+  (vk-phisical-device
+   vk-device
+   graphics-index transfer-index compute-index present-index
+   grphics-queue transfer-queue compute-queue present-queue))
 
 
 ; Devuelve cuatro valores que se corresponden con los indices donde existen respectivamente
@@ -52,8 +61,18 @@
 
 
 
+; Devuelve una cola del dispositivo
+(define (get-device-queue vk-device index-family)
+
+  (define queue (make-cvar _VkQueue))
+  (vkGetDeviceQueue device index-family 0 (cvar-ptr queue))
+
+  (cvar-ref queue))
+
+
+
 ; Obtiene un dispositivo y devuelve la estructura device.
-(define (create-device instance surface)
+(define (rkm-create-device instance surface)
 
   ; Requisitos
   (define device-extensions (list VK_KHR_SWAPCHAIN_EXTENSION_NAME))
@@ -161,14 +180,25 @@
   (define device-result (vkCreateDevice physical-device device-create-info #f (cvar-ptr device)))
   (check-vkResult device-result 'create-device)
 
-  (values physical-device (cvar-ref device) graphics-index transfer-index compute-index present-index))
+  ;Obtenemos las colas
+  (define-values (graphics-queue transfer-queue compute-queue present-queue)
+    (values (get-device-queue graphics-index)
+            (get-device-queue transfer-index)
+            (get-device-queue compute-index)
+            (get-device-queue present-index)))
+
+  ;Retornamos el dispositivo
+  (rkm-device physical-device
+              (cvar-ref device)
+              graphics-index transfer-index compute-index present-index
+              graphics-queue transfer-queue compute-queue present-queue))
 
 
 
 ; Destruye un dispositivo
-(define (destroy-device device)
+(define (rkm-destroy-device device)
 
-  (vkDestroyDevice device #f))
+  (vkDestroyDevice (rkm-device-vk-device device) #f))
 
 
 
