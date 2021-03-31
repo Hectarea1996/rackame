@@ -7,8 +7,7 @@
 
 
 (provide rkm-create-surface
-         rkm-surface?
-         rkm-surface-vk-surface
+         (struct-out rkm-surface)
          rkm-destroy-surface)
 
 

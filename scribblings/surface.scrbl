@@ -7,20 +7,17 @@
 @title{Surface}
 
 
+
+@defstruct[rkm-surface ([vk-instance VkInstance] [vk-surface VkSurface])]{
+        Representa una surface.
+}
+
+
 @defproc[(rkm-create-surface [instance rkm-instance?] [window cpointer?])
          rkm-surface?]{
         Crea una surface.
 }
 
-@defproc[(rkm-surface? [v any])
-         boolean?]{
-        Devuelve #t si @racket[v] es una surface. Retorna #f en otro caso.
-}
-
-@defproc[(rkm-surface-vk-surface [surface rkm-surface?])
-         VkSurfaceKHR]{
-        Devuelve la surface de vulkan.
-}
 
 @defproc[(rkm-destroy-surface [surface rkm-surface?])
          void?]{

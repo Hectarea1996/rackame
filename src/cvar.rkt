@@ -32,7 +32,7 @@
   (ptr-ref (cvar-struct-ptr cv) (cvar-struct-type cv)))
 
 
-(define (cvar-set! cv)
-  (ptr-set! (cvar-struct-ptr cv) (cvar-struct-type cv)))
+(define (cvar-set! cv val)
+  (ptr-set! (cvar-struct-ptr cv) (cvar-struct-type cv) val))
 
 

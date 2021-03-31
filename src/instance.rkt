@@ -10,10 +10,7 @@
 
 (provide rkm-create-instance
          rkm-destroy-instance
-         rkm-instance-layers
-         rkm-instance-extensions
-         rkm-instance-vk-instance
-         rkm-instance?)
+         (struct-out rkm-instance))
 
 
 ; Instance struct

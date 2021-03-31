@@ -19,7 +19,7 @@
   (vk-phisical-device
    vk-device
    graphics-index transfer-index compute-index present-index
-   grphics-queue transfer-queue compute-queue present-queue))
+   graphics-queue transfer-queue compute-queue present-queue))
 
 
 ; Devuelve cuatro valores que se corresponden con los indices donde existen respectivamente
@@ -65,7 +65,7 @@
 (define (get-device-queue vk-device index-family)
 
   (define queue (make-cvar _VkQueue))
-  (vkGetDeviceQueue device index-family 0 (cvar-ptr queue))
+  (vkGetDeviceQueue vk-device index-family 0 (cvar-ptr queue))
 
   (cvar-ref queue))
 

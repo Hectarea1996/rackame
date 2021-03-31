@@ -7,6 +7,15 @@
 @title{Dispositivo}
 
 
+
+@defstruct[rkm-device ([vk-phisical-device VkPhysicalDevice] [vk-device VkDevice] [graphics-index integer?]
+                       [transfer-index integer?] [compute-index integer?] [present-index integer?]
+                       [graphics-queue integer?] [transfer-queue integer?] [compute-queue integer?]
+                       [present-queue integer?])]{
+    Representa un dispositivo del computador.
+}
+
+
 @defproc[(rkm-create-device [instance rkm-instance?] [surface rkm-surface?])
          rkm-device?]{
     Selecciona un dispositivo gpu del computador.

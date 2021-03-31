@@ -7,8 +7,7 @@
 
 
 (provide rkm-create-window
-         rkm-window?
-         rkm-window-glfw-window
+         (struct-out rkm-window)
          rkm-destroy-window)
 
 
