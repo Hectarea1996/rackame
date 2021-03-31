@@ -13,6 +13,18 @@
          destroy-swapchain)
 
 
+
+; struct de un swapchain
+(struct rkm-swapchain
+  (device
+   vk-swapchain
+   format
+   extent
+   image-count
+   images
+   image-views))
+
+
 ; El maximo valor de un entero de 32 bits
 (define UINT32_MAX (- (expt 2 64) 1))
 

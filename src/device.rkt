@@ -2,6 +2,7 @@
 
 
 (require "physical-device.rkt"
+         "command-pool.rkt"
          "cvar.rkt"
          vulkan/unsafe
          ffi/unsafe
@@ -19,7 +20,8 @@
   (vk-phisical-device
    vk-device
    graphics-index transfer-index compute-index present-index
-   graphics-queue transfer-queue compute-queue present-queue))
+   graphics-queue transfer-queue compute-queue present-queue
+   graphics-pool transfer-pool compute-pool present-pool))
 
 
 ; Devuelve cuatro valores que se corresponden con los indices donde existen respectivamente
@@ -186,12 +188,20 @@
             (get-device-queue transfer-index)
             (get-device-queue compute-index)
             (get-device-queue present-index)))
+  
+  ;Creamos los command pools
+  (define-values (graphics-pool transfer-pool compute-pool present-pool)
+    (values (create-command-pool (cvar-ref device) graphics-index)
+            (create-command-pool (cvar-ref device) transfer-index)
+            (create-command-pool (cvar-ref device) compute-index)
+            (create-command-pool (cvar-ref device) present-index)))
 
   ;Retornamos el dispositivo
   (rkm-device physical-device
               (cvar-ref device)
               graphics-index transfer-index compute-index present-index
-              graphics-queue transfer-queue compute-queue present-queue))
+              graphics-queue transfer-queue compute-queue present-queue
+              graphics-pool transfer-pool compute-pool present-pool))
 
 
 
