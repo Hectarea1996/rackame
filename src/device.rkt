@@ -17,7 +17,7 @@
 
 ; struct device
 (struct rkm-device
-  (vk-phisical-device
+  (vk-physical-device
    vk-device
    graphics-index transfer-index compute-index present-index
    graphics-queue transfer-queue compute-queue present-queue

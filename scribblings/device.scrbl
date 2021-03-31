@@ -8,7 +8,7 @@
 
 
 
-@defstruct[rkm-device ([vk-phisical-device VkPhysicalDevice] [vk-device VkDevice] [graphics-index integer?]
+@defstruct[rkm-device ([vk-physical-device VkPhysicalDevice] [vk-device VkDevice] [graphics-index integer?]
                        [transfer-index integer?] [compute-index integer?] [present-index integer?]
                        [graphics-queue VkQueue] [transfer-queue VkQueue] [compute-queue VkQueue]
                        [present-queue VkQueue] [graphics-pool VkCommandPool] [transfer-pool VkCommandPool]

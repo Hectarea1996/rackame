@@ -7,7 +7,7 @@
 @title{Instancia}
 
 
-@defstruct[rkm-instance ([vk-instance VkInstance] [layers (Listof bytes?)] [extensions (Listof bytes?)])]{
+@defstruct[rkm-instance ([vk-instance VkInstance] [layers (listof bytes?)] [extensions (listof bytes?)])]{
     Estructura que representa una instancia de vulkan.
 
     @racket[layers] es la lista de layers activadas.

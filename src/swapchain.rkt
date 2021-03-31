@@ -2,6 +2,9 @@
 
 
 (require "physical-device.rkt"
+         "device.rkt"
+         "window.rkt"
+         "surface.rkt"
          "cvar.rkt"
          ffi/unsafe
          ffi/cvector
@@ -9,8 +12,9 @@
          glfw3)
 
 
-(provide create-swapchain
-         destroy-swapchain)
+(provide rkm-create-swapchain
+         (struct-out rkm-swapchain)
+         rkm-destroy-swapchain)
 
 
 
@@ -31,9 +35,9 @@
 
 
 ; Devuelve un formato para el swapchain
-(define (choose-format physical-device surface)
+(define (choose-format vk-physical-device vk-surface)
 
-  (define formats (get-surface-formats physical-device surface))
+  (define formats (get-surface-formats vk-physical-device vk-surface))
 
   (define the-format
     (for/or ([format formats])
@@ -49,9 +53,9 @@
 
 
 ; Devuelve un modo de presentacion para el swapchain
-(define (choose-present-mode physical-device surface)
+(define (choose-present-mode vk-physical-device vk-surface)
 
-  (define present-modes (get-surface-present-modes physical-device surface))
+  (define present-modes (get-surface-present-modes vk-physical-device vk-surface))
 
   (define the-mode
     (for/or ([mode present-modes])
@@ -66,14 +70,14 @@
 
 
 ; Devuelve unas dimensiones para el swapchain
-(define (choose-extent physical-device surface window)
+(define (choose-extent vk-physical-device vk-surface glfw-window)
 
-  (define surface-capabilities (get-surface-capabilities physical-device surface))
+  (define surface-capabilities (get-surface-capabilities vk-physical-device vk-surface))
 
   (if (not (equal? (VkExtent2D-width (VkSurfaceCapabilitiesKHR-currentExtent surface-capabilities)) UINT32_MAX))
       (VkSurfaceCapabilitiesKHR-currentExtent surface-capabilities)
       (let ([win-width (make-cvar _int)] [win-height (make-cvar _int)])
-        (glfwGetWindowSize (cvar-ptr win-width) (cvar-ptr win-height))
+        (glfwGetWindowSize glfw-window (cvar-ptr win-width) (cvar-ptr win-height))
         (make-VkExtent2D (max (VkExtent2D-width (VkSurfaceCapabilitiesKHR-minImageExtent surface-capabilities))
                               (min (VkExtent2D-width (VkSurfaceCapabilitiesKHR-maxImageExtent surface-capabilities))
                                    (cast (cvar-ref win-width) _int _uint32)))
@@ -84,18 +88,18 @@
 
 
 ; Devuelve un pre transform para el swapchain
-(define (choose-pre-transform physical-device surface)
+(define (choose-pre-transform vk-physical-device vk-surface)
 
-  (define surface-capabilities (get-surface-capabilities physical-device surface))
+  (define surface-capabilities (get-surface-capabilities vk-physical-device vk-surface))
 
   (VkSurfaceCapabilitiesKHR-currentTransform surface-capabilities))
 
 
 
 ; Devuelve un numero de imagenes para el swapchain
-(define (choose-image-count physical-device surface)
+(define (choose-image-count vk-physical-device vk-surface)
 
-  (define surface-capabilities (get-surface-capabilities physical-device surface))
+  (define surface-capabilities (get-surface-capabilities vk-physical-device vk-surface))
 
   (if (and (> (VkSurfaceCapabilitiesKHR-maxImageCount surface-capabilities) 0)
            (>= (VkSurfaceCapabilitiesKHR-minImageCount surface-capabilities) (VkSurfaceCapabilitiesKHR-maxImageCount surface-capabilities)))
@@ -103,25 +107,33 @@
       (add1 (VkSurfaceCapabilitiesKHR-minImageCount surface-capabilities))))
 
 
-; Crea un swapchain
-(define (create-swapchain physical-device device surface window graphics-index present-index)
 
-  (define format (choose-format physical-device surface))
-  (define present-mode (choose-present-mode physical-device surface))
-  (define extent (choose-extent physical-device surface window))
-  (define pre-transform (choose-pre-transform physical-device surface))
-  (define image-count (choose-image-count physical-device surface))
-  
+; Crea un swapchain
+(define (rkm-create-swapchain device window)
+
+  ;Obtenemos informacion preliminar
+  (define vk-physical-device (rkm-device-vk-physical-device device))
+  (define vk-surface (rkm-surface-vk-surface (rkm-window-surface window)))
+  (define glfw-window (rkm-window-glfw-window window))
+  (define graphics-index (rkm-device-graphics-index device))
+  (define present-index (rkm-device-present-index device))
+
+  (define format (choose-format vk-physical-device vk-surface))
+  (define present-mode (choose-present-mode vk-physical-device vk-surface))
+  (define extent (choose-extent vk-physical-device vk-surface glfw-window))
+  (define pre-transform (choose-pre-transform vk-physical-device vk-surface))
+  (define image-count (choose-image-count vk-physical-device vk-surface))
 
   (define-values (sharing-mode index-count indices)
     (if (not (equal? graphics-index present-index))
         (values VK_SHARING_MODE_CONCURRENT 2 (list->cblock `(,graphics-index ,present-index) _uint32))
         (values VK_SHARING_MODE_EXCLUSIVE 0 #f)))
 
+  ;Creamos el swapchain
   (define swapchain-info (make-VkSwapchainCreateInfoKHR VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR
                                                         #f
                                                         0
-                                                        surface
+                                                        vk-surface
                                                         image-count
                                                         (VkSurfaceFormatKHR-format format)
                                                         (VkSurfaceFormatKHR-colorSpace format)
@@ -169,16 +181,23 @@
                         (check-vkResult view-result 'create-swapchain)
                         (cvar-ref image-view)))
 
-  ;Retornamos todo
-  (values (cvar-ref swapchain) (cvector->list images) image-views))
+  ;Devolvemos el swapchain
+  (rkm-swapchain device (cvar-ref swapchain)
+                 format extent
+                 (cvar-ref true-image-count)
+                 (cvector->list images) image-views))
 
 
 
 ; Destruye un swapchain y las imageviews
-(define (destroy-swapchain device swapchain image-views)
+(define (rkm-destroy-swapchain swapchain)
+
+  (define vk-device (rkm-device-vk-device (rkm-swapchain-device swapchain)))
+  (define image-views (rkm-swapchain-image-views swapchain))
+  (define vk-swapchain (rkm-swapchain-vk-swapchain swapchain))
 
   (for ([image-view image-views])
-    (vkDestroyImageView device image-view #f))
+    (vkDestroyImageView vk-device image-view #f))
 
-  (vkDestroySwapchainKHR device swapchain #f))
+  (vkDestroySwapchainKHR vk-device vk-swapchain #f))
 
