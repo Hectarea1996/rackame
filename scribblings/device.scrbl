@@ -17,7 +17,7 @@
 }
 
 
-@defproc[(rkm-create-device [instance rkm-instance?] [surface rkm-surface?])
+@defproc[(rkm-create-device [instance rkm-instance?] [window rkm-window?])
          rkm-device?]{
     Selecciona un dispositivo gpu del computador y crea una interfaz para su manejo.
 }
