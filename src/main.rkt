@@ -12,36 +12,17 @@
 
 (glfw-init)
 
-#|(define instance (create-instance #t))
-(define window (create-window "Hola" 640 480))
-(define surface (create-surface instance window))
-(define-values (physical-device device graphics-index transfer-index compute-index present-index)
-  (create-device instance surface))
-
-(define-values (graphics-queue transfer-queue compute-queue present-queue)
-  (values (get-device-queue device graphics-index)
-          (get-device-queue device transfer-index)
-          (get-device-queue device compute-index)
-          (get-device-queue device present-index)))
-(define-values (graphics-pool transfer-pool compute-pool present-pool)
-  (values (create-command-pool device graphics-index)
-          (create-command-pool device transfer-index)
-          (create-command-pool device compute-index)
-          (create-command-pool device present-index)))
-
-(define-values (swapchain swapchain-imges swapchain-image-views) (create-swapchain physical-device device surface window graphics-index present-index))
+(define instance (rkm-create-instance #t))
+(define window (rkm-create-window instance "Hola" 640 480))
+(define device (rkm-create-device instance window))
+(define swapchain (rkm-create-swapchain device window))
 
 (sleep 3)
 
-(destroy-swapchain device swapchain swapchain-image-views)
-(destroy-command-pool device graphics-pool)
-(destroy-command-pool device transfer-pool)
-(destroy-command-pool device compute-pool)
-(destroy-command-pool device present-pool)
-(destroy-device device)
-(destroy-surface instance surface)
-(destroy-window window)
-(destroy-instance instance)|#
+(rkm-destroy-swapchain swapchain)
+(rkm-destroy-device device)
+(rkm-destroy-window window)
+(rkm-destroy-instance instance)
 
 (glfw-terminate)
 

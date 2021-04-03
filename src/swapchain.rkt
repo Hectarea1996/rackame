@@ -114,6 +114,7 @@
   ;Obtenemos informacion preliminar
   (define vk-physical-device (rkm-device-vk-physical-device device))
   (define vk-surface (rkm-surface-vk-surface (rkm-window-surface window)))
+  (define vk-device (rkm-device-vk-device device))
   (define glfw-window (rkm-window-glfw-window window))
   (define graphics-index (rkm-device-graphics-index device))
   (define present-index (rkm-device-present-index device))
@@ -150,14 +151,15 @@
                                                         #f))  ;Esto deberia ser VK_NULL_HANDLE
 
   (define swapchain (make-cvar _VkSwapchainKHR))
-  (define swapchain-result (vkCreateSwapchainKHR device swapchain-info #f (cvar-ptr swapchain)))
+  (define swapchain-result (vkCreateSwapchainKHR vk-device swapchain-info #f (cvar-ptr swapchain)))
   (check-vkResult swapchain-result 'create-swapchain)
+  (define vk-swapchain (cvar-ref swapchain))
 
   ;Obtenemos las imagenes
   (define true-image-count (make-cvar _uint32))
-  (vkGetSwapchainImagesKHR device (cvar-ref swapchain) (cvar-ptr true-image-count) #f)
+  (vkGetSwapchainImagesKHR vk-device vk-swapchain (cvar-ptr true-image-count) #f)
   (define images (make-cvector _VkImage (cvar-ref true-image-count)))
-  (vkGetSwapchainImagesKHR device (cvar-ref swapchain) (cvar-ptr true-image-count) (cvector-ptr images))
+  (vkGetSwapchainImagesKHR vk-device vk-swapchain (cvar-ptr true-image-count) (cvector-ptr images))
 
   ;Creamos las imageviews
   (define image-views (for/list ([i (build-list image-count values)])
@@ -177,12 +179,12 @@
                                                                                                           0
                                                                                                           1)))
                         (define image-view (make-cvar _VkImageView))
-                        (define view-result (vkCreateImageView device image-view-info #f (cvar-ptr image-view)))
+                        (define view-result (vkCreateImageView vk-device image-view-info #f (cvar-ptr image-view)))
                         (check-vkResult view-result 'create-swapchain)
                         (cvar-ref image-view)))
 
   ;Devolvemos el swapchain
-  (rkm-swapchain device (cvar-ref swapchain)
+  (rkm-swapchain device vk-swapchain
                  format extent
                  (cvar-ref true-image-count)
                  (cvector->list images) image-views))

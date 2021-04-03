@@ -2,7 +2,10 @@
 
 
 (require "physical-device.rkt"
+         "instance.rkt"
+         "surface.rkt"
          "command-pool.rkt"
+         "window.rkt"
          "cvar.rkt"
          vulkan/unsafe
          ffi/unsafe
@@ -74,9 +77,11 @@
 
 
 ; Obtiene un dispositivo y devuelve la estructura device.
-(define (rkm-create-device instance surface)
+(define (rkm-create-device instance window)
 
   ; Requisitos
+  (define vk-instance (rkm-instance-vk-instance instance))
+  (define vk-surface (rkm-surface-vk-surface (rkm-window-surface window)))
   (define device-extensions (list VK_KHR_SWAPCHAIN_EXTENSION_NAME))
   (define family-queue-flags (bitwise-ior VK_QUEUE_GRAPHICS_BIT
                                           VK_QUEUE_TRANSFER_BIT
@@ -84,15 +89,15 @@
   (define physical-device-type VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU)
 
   ; Obtenemos un dispositivo fisico que cumpla los requisitos
-  (define physical-device (get-physical-device instance
-                                               surface
+  (define physical-device (get-physical-device vk-instance
+                                               vk-surface
                                                physical-device-type
                                                device-extensions
                                                family-queue-flags
                                                features-checker))
 
   ; Obtenemos los indices de las familias de colas
-  (define-values (graphics-index transfer-index compute-index present-index) (get-family-indices physical-device surface))
+  (define-values (graphics-index transfer-index compute-index present-index) (get-family-indices physical-device vk-surface))
   (define family-indices (remove-duplicates (list graphics-index transfer-index compute-index present-index)))
 
   ; Generamos los create-info de cada familia de colas
@@ -181,24 +186,25 @@
   (define device (make-cvar _VkDevice))
   (define device-result (vkCreateDevice physical-device device-create-info #f (cvar-ptr device)))
   (check-vkResult device-result 'create-device)
+  (define vk-device (cvar-ref device))
 
   ;Obtenemos las colas
   (define-values (graphics-queue transfer-queue compute-queue present-queue)
-    (values (get-device-queue graphics-index)
-            (get-device-queue transfer-index)
-            (get-device-queue compute-index)
-            (get-device-queue present-index)))
+    (values (get-device-queue vk-device graphics-index)
+            (get-device-queue vk-device transfer-index)
+            (get-device-queue vk-device compute-index)
+            (get-device-queue vk-device present-index)))
   
   ;Creamos los command pools
   (define-values (graphics-pool transfer-pool compute-pool present-pool)
-    (values (create-command-pool (cvar-ref device) graphics-index)
-            (create-command-pool (cvar-ref device) transfer-index)
-            (create-command-pool (cvar-ref device) compute-index)
-            (create-command-pool (cvar-ref device) present-index)))
+    (values (create-command-pool vk-device graphics-index)
+            (create-command-pool vk-device transfer-index)
+            (create-command-pool vk-device compute-index)
+            (create-command-pool vk-device present-index)))
 
   ;Retornamos el dispositivo
   (rkm-device physical-device
-              (cvar-ref device)
+              vk-device
               graphics-index transfer-index compute-index present-index
               graphics-queue transfer-queue compute-queue present-queue
               graphics-pool transfer-pool compute-pool present-pool))
@@ -208,7 +214,14 @@
 ; Destruye un dispositivo
 (define (rkm-destroy-device device)
 
-  (vkDestroyDevice (rkm-device-vk-device device) #f))
+  (define vk-device (rkm-device-vk-device device))
+
+  (destroy-command-pool vk-device (rkm-device-graphics-pool device))
+  (destroy-command-pool vk-device (rkm-device-transfer-pool device))
+  (destroy-command-pool vk-device (rkm-device-compute-pool device))
+  (destroy-command-pool vk-device (rkm-device-present-pool device))
+
+  (vkDestroyDevice vk-device #f))
 
 
 
