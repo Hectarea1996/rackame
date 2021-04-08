@@ -43,3 +43,9 @@
          #:contracts ([device rkm-device?] [family-symbol symbol?])]{
     Crea un command buffer y graba los comandos situados en @racket[bodies ...].
 }
+
+@defform[(rkm-do-command-buffer/proc (args ...) device family-symbol bodies ...)
+         #:contracts ([device rkm-device?] [family-symbol symbol?])]{
+    Crea un command buffer y una función que graba los comandos situados en @racket[bodies ...].
+    La función puede usarse varias veces.
+}

@@ -19,7 +19,7 @@
 
 (sleep 3)
 
-(rkm-destroy-swapchain swapchain)
+;(rkm-destroy-swapchain swapchain)
 (rkm-destroy-device device)
 (rkm-destroy-window window)
 (rkm-destroy-instance instance)

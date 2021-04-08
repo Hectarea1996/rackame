@@ -6,7 +6,8 @@
 
 (provide (struct-out rkm-semaphore)
          rkm-create-semaphore
-         rkm-destroy-semaphore)
+         rkm-destroy-semaphore
+         (struct-out rkm-semaphore/stages))
 
 
 ; struct semaforo
@@ -39,3 +40,10 @@
   (define vk-semaphore (rkm-semaphore-vk-semaphore semaphore))
 
   (vkDestroySemaphore vk-device vk-semaphore #f))
+
+
+
+  ; struct semaphore/stage
+  (struct rkm-semaphore/stages
+    (semaphore
+     vk-stages))
