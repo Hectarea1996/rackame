@@ -22,9 +22,3 @@
     Si @racket[validation] no es @racket[#f] se activará la capa de validación de
     vulkan.
 }
-
-
-@defproc[(rkm-destroy-instance [instance rkm-instance?])
-         void?]{
-    Destruye una instancia de vulkan.
-}

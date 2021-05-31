@@ -5,11 +5,11 @@
          vulkan/unsafe
          glfw3/vulkan
          ffi/unsafe
+         ffi/unsafe/alloc
          ffi/cvector)
 
 
 (provide rkm-create-instance
-         rkm-destroy-instance
          (struct-out rkm-instance))
 
 
@@ -68,7 +68,7 @@
 
 
 ; Crea la instancia de vulkan y retorna el destructor
-(define (rkm-create-instance validation)
+(define (create-instance validation)
 
   ; Application info
   (define app-info (make-VkApplicationInfo VK_STRUCTURE_TYPE_APPLICATION_INFO
@@ -115,5 +115,9 @@
 
 
 ; Destruye la instancia
-(define (rkm-destroy-instance instance)
+(define (destroy-instance instance)
   (vkDestroyInstance (rkm-instance-vk-instance instance) #f))
+
+
+; Devuelve un allocator con deallocator de una instancia
+(define rkm-create-instance ((allocator destroy-instance) create-instance))

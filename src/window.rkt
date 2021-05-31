@@ -7,8 +7,7 @@
 
 
 (provide rkm-create-window
-         (struct-out rkm-window)
-         rkm-destroy-window)
+         (struct-out rkm-window))
 
 
 ; Window struct
@@ -18,7 +17,7 @@
 
 
 ; Crea una ventana
-(define (rkm-create-window instance name width height)
+(define (create-window instance name width height)
   (glfwWindowHint GLFW_CLIENT_API GLFW_NO_API)
   (glfwWindowHint GLFW_RESIZABLE GLFW_FALSE)
   (define glfw-window (glfwCreateWindow width height name #f #f))
@@ -29,6 +28,10 @@
 
 
 ; Destruye una ventana
-(define (rkm-destroy-window window)
-  (rkm-destroy-surface (rkm-window-surface window))
+(define (destroy-window window)
   (glfwDestroyWindow (rkm-window-glfw-window window)))
+
+
+
+; Allocator y destructor de una ventana
+(define rkm-create-window ((allocator destroy-window) create-window))

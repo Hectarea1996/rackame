@@ -24,11 +24,6 @@
     ]
 }
 
-@defproc[(rkm-destroy-command-buffer [command-buffer rkm-command-buffer?])
-          void?]{
-    Destruye un command buffer. 
-}
-
 @defproc[(rkm-begin-command-buffer [command-buffer rkm-command-buffer?] [usage-flags VkCommandBufferUsageFlags])
          void?]{
     Inicia la grabacion de comandos en un command buffer.            

@@ -2,11 +2,11 @@
 
 (require "device.rkt" 
          "cvar.rkt"
-         vulkan/unsafe)
+         vulkan/unsafe
+         ffi/unsafe/alloc)
 
 (provide (struct-out rkm-semaphore)
          rkm-create-semaphore
-         rkm-destroy-semaphore
          (struct-out rkm-semaphore/stages))
 
 
@@ -17,7 +17,7 @@
 
 
 ; Crea un semaforo
-(define (rkm-create-semaphore device)
+(define (create-semaphore device)
 
   (define vk-device (rkm-device-vk-device device))
 
@@ -34,7 +34,7 @@
 
 
 ; Destruye un semaforo
-(define (rkm-destroy-semaphore semaphore)
+(define (destroy-semaphore semaphore)
 
   (define vk-device (rkm-semaphore-vk-device semaphore))
   (define vk-semaphore (rkm-semaphore-vk-semaphore semaphore))
@@ -43,7 +43,12 @@
 
 
 
-  ; struct semaphore/stage
-  (struct rkm-semaphore/stages
-    (semaphore
-     vk-stages))
+; Allocator y destructor de un semaforo
+(define rkm-create-semaphore ((allocator destroy-semaphore) create-semaphore))
+
+
+
+; struct semaphore/stage
+(struct rkm-semaphore/stages
+  (semaphore
+    vk-stages))

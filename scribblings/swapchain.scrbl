@@ -18,9 +18,3 @@
          rkm-swapchain?]{
     Crea un swapchain.
 }
-
-
-@defproc[(rkm-destroy-swapchain [swapchain rkm-swapchain?])
-         void?]{
-    Destruye un swapchain.
-}

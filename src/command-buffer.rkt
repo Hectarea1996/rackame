@@ -5,6 +5,7 @@
          "cvar.rkt"
          vulkan/unsafe
          ffi/unsafe
+         ffi/unsafe/alloc
          ffi/cvector)
 
 
@@ -16,7 +17,7 @@
 
 
 ; Crea un command buffer
-(define (rkm-create-command-buffer device family-symbol)
+(define (create-command-buffer device family-symbol)
 
   (define vk-command-pool (case family-symbol
                               [(graphics) (rkm-device-graphics-pool device)]
@@ -39,12 +40,17 @@
 
 
 ; Destruye un command buffer
-(define (rkm-destroy-command-buffer command-buffer)
+(define (destroy-command-buffer command-buffer)
    
   (vkFreeCommandBuffers (rkm-command-buffer-vk-device command-buffer)
                         (rkm-command-buffer-vk-command-pool)
                         1
                         (cvar-ptr (rkm-command-buffer-cv-command-buffer command-buffer))))
+
+
+
+; Allocator y destructor de un command buffer
+(define rkm-create-command-buffer ((allocator destroy-command-buffer) create-command-buffer))
 
 
 

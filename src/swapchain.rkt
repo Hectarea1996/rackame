@@ -7,14 +7,14 @@
          "surface.rkt"
          "cvar.rkt"
          ffi/unsafe
+         ffi/unsafe/alloc
          ffi/cvector
          vulkan/unsafe
          glfw3)
 
 
 (provide rkm-create-swapchain
-         (struct-out rkm-swapchain)
-         rkm-destroy-swapchain)
+         (struct-out rkm-swapchain))
 
 
 
@@ -109,7 +109,7 @@
 
 
 ; Crea un swapchain
-(define (rkm-create-swapchain device window)
+(define (create-swapchain device window)
 
   ;Obtenemos informacion preliminar
   (define vk-physical-device (rkm-device-vk-physical-device device))
@@ -192,7 +192,7 @@
 
 
 ; Destruye un swapchain y las imageviews
-(define (rkm-destroy-swapchain swapchain)
+(define (destroy-swapchain swapchain)
 
   (define vk-device (rkm-device-vk-device (rkm-swapchain-device swapchain)))
   (define image-views (rkm-swapchain-image-views swapchain))
@@ -202,4 +202,9 @@
     (vkDestroyImageView vk-device image-view #f))
 
   (vkDestroySwapchainKHR vk-device vk-swapchain #f))
+
+
+
+; Allocator y destructor de un swapchain
+(define rkm-create-swapchain ((allocator destroy-swapchain) create-swapchain))
 

@@ -17,9 +17,3 @@
          rkm-window?]{
     Crea una ventana con nombre @racket[name] y tamaño @racket[windth]*@racket[height].
 }
-
-
-@defproc[(rkm-destroy-window [window rkm-window?])
-         void?]{
-    Destruye una ventana.
-}

@@ -9,13 +9,16 @@
          "cvar.rkt"
          vulkan/unsafe
          ffi/unsafe
+         ffi/unsafe/alloc
          racket/list)
 
 
 (provide (except-out (all-defined-out)
                      get-family-indices
                      features-checker
-                     get-device-queue))
+                     get-device-queue
+                     create-device
+                     destroy-device))
 
 
 ; struct device
@@ -77,7 +80,7 @@
 
 
 ; Obtiene un dispositivo y devuelve la estructura device.
-(define (rkm-create-device instance window)
+(define (create-device instance window)
 
   ; Requisitos
   (define vk-instance (rkm-instance-vk-instance instance))
@@ -212,7 +215,7 @@
 
 
 ; Destruye un dispositivo
-(define (rkm-destroy-device device)
+(define (destroy-device device)
 
   (define vk-device (rkm-device-vk-device device))
 
@@ -225,3 +228,5 @@
 
 
 
+; Allocator y destructor de un dispositivo
+(define rkm-create-device ((allocator destroy-device) create-device))

@@ -1,5 +1,7 @@
 #lang racket/base
 
+(require "semaphore.rkt")
+
 
 ; struct submit-info
 (struct rkm-submit-info
@@ -61,3 +63,5 @@
                    w-sems/stage
                    s-sems
                    procs))
+
+                   

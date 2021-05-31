@@ -16,8 +16,3 @@
          rkm-semaphore?]{
     Crea un semaforo.
 }
-
-@defproc[(rkm-destroy-semaphore [semaphore rkm-semaphore?])
-         void?]{
-    Destruye un semaforo.
-}

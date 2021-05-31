@@ -17,9 +17,3 @@
          rkm-surface?]{
         Crea una surface.
 }
-
-
-@defproc[(rkm-destroy-surface [surface rkm-surface?])
-         void?]{
-        Destruye una surface.
-}
