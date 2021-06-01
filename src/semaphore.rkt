@@ -51,4 +51,4 @@
 ; struct semaphore/stage
 (struct rkm-semaphore/stages
   (semaphore
-    vk-stages))
+   vk-stages))

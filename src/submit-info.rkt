@@ -11,6 +11,7 @@
    pre-submit-procs))
 
 
+#|
 ; inserta un nuevo semaforo de tipo signal
 (define (rkm-add-signal-semaphore submit-info signal-sem)
   (rkm-submit-info (rkm-submit-info-vk-command-buffers submit-info)
@@ -43,6 +44,7 @@
           (values (cons (rkm-add-signal-semaphore submit1 new-sem)
                         new-submit-infos)
                   (cons new-sem new-sems)))))))
+|#
 
         
 
@@ -63,5 +65,24 @@
                    w-sems/stage
                    s-sems
                    procs))
+
+
+            
+; Crea los vkSubmitInfo y devuelve la lista que los contiene y la lista de procs
+(define (rkm-unzip-submit-infos submit-infos)
+
+   (define wait-semaphore-count (length (rkm-submit-info-w-sems/stage submit-info)))
+   (define vk-wait-semaphores (cvector-ptr (list->cvector (map car (rkm-submit-info-w-sems/stage submit-info)) VkSemaphore)))
+   (define vk-wait-stages     (cvector-ptr (list->cvector (map cdr (rkm-submit-info-w-sems/stage submit-info)) VkPipelineStageFlags)))
+   (define signal-semaphore-count (length s-sems))
+   (define vk-signal-semaphores (cvector-ptr (list->cvector s-sems VkSemaphore)))
+
+   (for/foldr ([vk-submit-infos '()] [proc-lst '()]) ([submit-info submit-infos])
+      (define vk-submit-info (make-VkSubmitInfo VK_STRUCTURE_TYPE_SUBMIT_INFO
+                                                #f
+                                                wait-semaphore-count
+                                                vk-wait-semaphores
+                                                vk-wait-stages
+                                                ))))
 
                    

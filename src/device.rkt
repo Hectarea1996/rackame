@@ -230,3 +230,14 @@
 
 ; Allocator y destructor de un dispositivo
 (define rkm-create-device ((allocator destroy-device) create-device))
+
+
+
+; Procesa submit infos sobre una cola grafica
+(define (rkm-graphics-submit device vk-submit-infos vk-fence)
+   
+   (define c-vk-submit-infos (list->cvector vk-submit-infos VkSubmitInfo))
+
+   (define submit-result (vkQueueSubmit (rkm-device-graphics-queue device) (cvector-length c-vk-submit-infos)
+                                        (cvector-ptr c-vk-submit-infos) vk-fence))
+   (check-vkResult submit-result 'rkm-graphics-submit))
