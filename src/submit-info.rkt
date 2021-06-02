@@ -71,18 +71,28 @@
 ; Crea los vkSubmitInfo y devuelve la lista que los contiene y la lista de procs
 (define (rkm-unzip-submit-infos submit-infos)
 
-   (define wait-semaphore-count (length (rkm-submit-info-w-sems/stage submit-info)))
-   (define vk-wait-semaphores (cvector-ptr (list->cvector (map car (rkm-submit-info-w-sems/stage submit-info)) VkSemaphore)))
-   (define vk-wait-stages     (cvector-ptr (list->cvector (map cdr (rkm-submit-info-w-sems/stage submit-info)) VkPipelineStageFlags)))
-   (define signal-semaphore-count (length s-sems))
-   (define vk-signal-semaphores (cvector-ptr (list->cvector s-sems VkSemaphore)))
-
    (for/foldr ([vk-submit-infos '()] [proc-lst '()]) ([submit-info submit-infos])
+
+      (define submit-procs (rkm-submit-info-procs submit-info))
+
+      (define wait-semaphore-count   (length (rkm-submit-info-w-sems/stage submit-info)))
+      (define vk-wait-semaphores     (cvector-ptr (list->cvector (map car (rkm-submit-info-w-sems/stage submit-info)) VkSemaphore)))
+      (define vk-wait-stages         (cvector-ptr (list->cvector (map cdr (rkm-submit-info-w-sems/stage submit-info)) VkPipelineStageFlags)))
+      (define signal-semaphore-count (length s-sems))
+      (define vk-signal-semaphores   (cvector-ptr (list->cvector s-sems VkSemaphore)))
+      (define command-buffers-count  (length (rkm-submit-info-vk-command-buffers submit-info)))
+      (define vk-command-buffers        (cvector-ptr (list->cvector (rkm-submit-info-vk-command-buffers submit-info) VkSubmitInfo)))
+
       (define vk-submit-info (make-VkSubmitInfo VK_STRUCTURE_TYPE_SUBMIT_INFO
                                                 #f
                                                 wait-semaphore-count
                                                 vk-wait-semaphores
                                                 vk-wait-stages
-                                                ))))
+                                                command-buffers-count
+                                                vk-command-buffers
+                                                signal-semaphore-count
+                                                vk-signal-semaphores))))
+                                              
+      (values (cons vk-submit-info vk-submit-infos) (append submit-procs proc-lst))
 
                    
