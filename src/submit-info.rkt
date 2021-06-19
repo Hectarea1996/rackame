@@ -1,6 +1,7 @@
 #lang racket/base
 
-(require "semaphore.rkt")
+(require "semaphore.rkt"
+         macro-helper)
 
 
 ; struct submit-info
@@ -49,7 +50,7 @@
         
 
 ; crea un submit info a partir de unos command buffers y unos semaforos
-(define (rkm-create-submit-info #:wait-sems/stage w-sems/stage #:signal-sems s-sems . command-buffers)
+(define (rkm-create-submit-info #:wait-sems/stage [w-sems/stage '()] #:signal-sems [s-sems '()] . command-buffers)
   (define-values (vk-command-buffers procs) (for/fold ([command-buffer command-buffers] [vk-command-buffers '()] [procs '()] 
                                                        #:result (values vk-command-buffers procs))
                                               (if (rkm-command-buffer? command-buffer)
@@ -67,7 +68,32 @@
                    procs))
 
 
+
+; Genera un par de valores, una lista de command buffers y una lista de procedimientos. 
+; Primero hay que especificar los argumentos de los procedimientos (como un lambda), luego los semaforos con 
+; los keywords #:wait-sems/stage y #:signal-sems, y por ultimo el comportamiento de cada command buffer. Cada
+; linea debe grabar un command buffer, si se utilizan los argumentos se usara rkm-do-command-buffer/proc, si no, 
+; se usara rkm-do-command-buffer.
+(define-syntax (rkm-do-submit-info stx)
+
+  (define (rkm-change-body args stx)
+    (define dynamic? (apply or (syntax->datum (stx-map (lambda (s)
+                                                         (stx-rec-findb s stx)) args))))      
+    (if dynamic?
+      #`(rkm-do-command-buffer/proc #,args #,stx)
+      #`(rkm-do-command-buffer #,stx))))
+
+  (define (rkm-transform-bodies args stx)
+    (syntax-case stx ()
+      [() stx-null]
+      [(kw val rest ...) (stx-keyword? kw) (stx-list* #'kw #'val (rkm-transorm-bodies #'(rest ...)))]
+      [(b bs ...) (stx-cons (rkm-change-body args #'b) (rkm-transform-bodies args #'(bs ...)))]))
+
+  (syntax-case stx ()
+    [(_ (args ...) bodies ...) #`(rkm-create-submit-info #,@(rkm-transform-bodies #'(bodies ...)))]))
+
             
+
 ; Crea los vkSubmitInfo y devuelve la lista que los contiene y la lista de procs
 (define (rkm-unzip-submit-infos submit-infos)
 
@@ -96,3 +122,4 @@
       (values (cons vk-submit-info vk-submit-infos) (append submit-procs proc-lst))
 
                    
+
