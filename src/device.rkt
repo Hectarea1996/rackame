@@ -241,3 +241,14 @@
    (define submit-result (vkQueueSubmit (rkm-device-graphics-queue device) (cvector-length c-vk-submit-infos)
                                         (cvector-ptr c-vk-submit-infos) vk-fence))
    (check-vkResult submit-result 'rkm-graphics-submit))
+
+
+
+; Realiza un submit sobre una cola
+#|(define (rkm-submit device type-queue vk-submit-infos vk-fence)
+  
+  (define c-vk-submit-infos (list->cvector vk-submit-infos VkSubmitInfo))
+
+   (define submit-result (vkQueueSubmit (rkm-device-get-queue device type-queue) (cvector-length c-vk-submit-infos)
+                                        (cvector-ptr c-vk-submit-infos) vk-fence))
+   (check-vkResult submit-result 'rkm-graphics-submit))|#
