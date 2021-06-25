@@ -7,7 +7,8 @@
          "device.rkt"
          "queue.rkt"
          "command-pool.rkt"
-         "swapchain.rkt")
+         "swapchain.rkt"
+         "device-submit.rkt")
 
 
 (glfw-init)
@@ -17,7 +18,6 @@
 (define device (rkm-create-device instance window))
 (define swapchain (rkm-create-swapchain device window))
 
-(sleep 3)
 
 ;(rkm-destroy-swapchain swapchain)
 ;(rkm-destroy-device device)

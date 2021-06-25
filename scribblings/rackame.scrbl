@@ -26,6 +26,8 @@ Rackame apunta a ser un software para crear videojuegos usando el lenguaje Racke
 
 @include-section{semaphore.scrbl}
 
+@include-section{fence.scrbl}
+
 @include-section{command-buffer.scrbl}
 
 

@@ -10,6 +10,7 @@
          vulkan/unsafe
          ffi/unsafe
          ffi/unsafe/alloc
+         ffi/cvector
          racket/list)
 
 
@@ -236,7 +237,7 @@
 ; Procesa submit infos sobre una cola grafica
 (define (rkm-graphics-submit device vk-submit-infos vk-fence)
    
-   (define c-vk-submit-infos (list->cvector vk-submit-infos VkSubmitInfo))
+   (define c-vk-submit-infos (list->cvector vk-submit-infos _VkSubmitInfo))
 
    (define submit-result (vkQueueSubmit (rkm-device-graphics-queue device) (cvector-length c-vk-submit-infos)
                                         (cvector-ptr c-vk-submit-infos) vk-fence))

@@ -30,7 +30,7 @@
 
 
 ; El maximo valor de un entero de 32 bits
-(define UINT32_MAX (- (expt 2 64) 1))
+(define UINT32_MAX (- (expt 2 32) 1))
 
 
 

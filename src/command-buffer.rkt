@@ -9,6 +9,12 @@
          ffi/cvector)
 
 
+(provide (struct-out rkm-command-buffer)
+         rkm-create-command-buffer
+         rkm-do-command-buffer
+         rkm-do-command-buffer/proc)
+
+
 ; struct de un command buffer 
 (struct rkm-command-buffer
   (vk-device
