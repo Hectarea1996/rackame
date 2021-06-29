@@ -14,7 +14,9 @@
 (glfw-init)
 
 (define instance (rkm-create-instance #t))
-(define window (rkm-create-window instance "Hola" 640 480))
+(define window (rkm-create-window "Hola" 640 480))
+(define surface (rkm-create-surface instance window))
+(define physical-device (rkm-get-physical-device instance #:surface surface))
 (define device (rkm-create-device instance window))
 (define swapchain (rkm-create-swapchain device window))
 

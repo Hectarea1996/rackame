@@ -1,6 +1,7 @@
 #lang racket/base
 
 (require "instance.rkt"
+         "window.rkt"
          glfw3/vulkan
          vulkan/unsafe
          ffi/unsafe
@@ -18,9 +19,10 @@
 
 
 ; Crea la surface
-(define (create-surface instance glfw-window)
+(define (create-surface instance window)
 
   (define vk-instance (rkm-instance-vk-instance instance))
+  (define glfw-window (rkm-window-glfw-window window))
   (define-values (surface-result vk-surface) (glfwCreateWindowSurface vk-instance glfw-window #f))
   (check-vkResult surface-result 'create-surface)
 

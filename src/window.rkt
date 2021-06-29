@@ -12,18 +12,16 @@
 
 ; Window struct
 (struct rkm-window
-  (glfw-window
-   surface))
+  (glfw-window))
 
 
 ; Crea una ventana
-(define (create-window instance name width height)
+(define (create-window name width height)
   (glfwWindowHint GLFW_CLIENT_API GLFW_NO_API)
   (glfwWindowHint GLFW_RESIZABLE GLFW_FALSE)
   (define glfw-window (glfwCreateWindow width height name #f #f))
-  (define surface (rkm-create-surface instance glfw-window))
   
-  (rkm-window glfw-window surface))
+  (rkm-window glfw-window))
 
 
 

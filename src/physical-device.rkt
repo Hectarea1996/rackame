@@ -4,6 +4,7 @@
 (require "cvar.rkt"
          "array.rkt"
          vulkan/unsafe
+         racket/bool
          ffi/cvector
          ffi/unsafe)
 
@@ -96,14 +97,196 @@
 
 ; --- device features ---
 
+(struct rkm-physical-device-features
+  (vk-physical-device-features))
+
+
+(define (rkm-create-physical-device-features #:robustBufferAccess [robustBufferAccess VK_FALSE]
+                                             #:fullDrawIndexUint32 [fullDrawIndexUint32 VK_FALSE]
+                                             #:imageCubeArray [imageCubeArray VK_FALSE]
+                                             #:independentBlend [independentBlend VK_FALSE]
+                                             #:geometryShader [geometryShader VK_FALSE]
+                                             #:tessellationShader [tessellationShader VK_FALSE]
+                                             #:sampleRateShading [sampleRateShading VK_FALSE]
+                                             #:dualSrcBlend [dualSrcBlend VK_FALSE]
+                                             #:logicOp [logicOp VK_FALSE]
+                                             #:multiDrawIndirect [multiDrawIndirect VK_FALSE]
+                                             #:drawIndirectFirstInstance [drawIndirectFirstInstance VK_FALSE]
+                                             #:depthClamp [depthClamp VK_FALSE]
+                                             #:depthBiasClamp [depthBiasClamp VK_FALSE]
+                                             #:fillModeNonSolid [fillModeNonSolid VK_FALSE]
+                                             #:depthBounds [depthBounds VK_FALSE]
+                                             #:wideLines [wideLines VK_FALSE]
+                                             #:largePoints [largePoints VK_FALSE]
+                                             #:alphaToOne [alphaToOne VK_FALSE]
+                                             #:multiViewport [multiViewport VK_FALSE]
+                                             #:samplerAnisotropy [samplerAnisotropy VK_FALSE]
+                                             #:textureCompressionETC2 [textureCompressionETC2 VK_FALSE]
+                                             #:textureCompressionASTC_LDR [textureCompressionASTC_LDR VK_FALSE]
+                                             #:textureCompressionBC [textureCompressionBC VK_FALSE]
+                                             #:occlusionQueryPrecise [occlusionQueryPrecise VK_FALSE]
+                                             #:pipelineStatisticsQuery [pipelineStatisticsQuery VK_FALSE]
+                                             #:vertexPipelineStoresAndAtomics [vertexPipelineStoresAndAtomics VK_FALSE]
+                                             #:fragmentStoresAndAtomics [fragmentStoresAndAtomics VK_FALSE]
+                                             #:shaderTessellationAndGeometryPointSize [shaderTessellationAndGeometryPointSize VK_FALSE]
+                                             #:shaderImageGatherExtended [shaderImageGatherExtended VK_FALSE]
+                                             #:shaderStorageImageExtendedFormats [shaderStorageImageExtendedFormats VK_FALSE]
+                                             #:shaderStorageImageMultisample [shaderStorageImageMultisample VK_FALSE]
+                                             #:shaderStorageImageReadWithoutFormat [shaderStorageImageReadWithoutFormat VK_FALSE]
+                                             #:shaderStorageImageWriteWithoutFormat [shaderStorageImageWriteWithoutFormat VK_FALSE]
+                                             #:shaderUniformBufferArrayDynamicIndexing [shaderUniformBufferArrayDynamicIndexing VK_FALSE]
+                                             #:shaderSampledImageArrayDynamicIndexing [shaderSampledImageArrayDynamicIndexing VK_FALSE]
+                                             #:shaderStorageBufferArrayDynamicIndexing [shaderStorageBufferArrayDynamicIndexing VK_FALSE]
+                                             #:shaderStorageImageArrayDynamicIndexing [shaderStorageImageArrayDynamicIndexing VK_FALSE]
+                                             #:shaderClipDistance [shaderClipDistance VK_FALSE]
+                                             #:shaderCullDistance [shaderCullDistance VK_FALSE]
+                                             #:shaderFloat64 [shaderFloat64 VK_FALSE]
+                                             #:shaderInt64 [shaderInt64 VK_FALSE]
+                                             #:shaderInt16 [shaderInt16 VK_FALSE]
+                                             #:shaderResourceResidency [shaderResourceResidency VK_FALSE]
+                                             #:shaderResourceMinLod [shaderResourceMinLod VK_FALSE]
+                                             #:sparseBinding [sparseBinding VK_FALSE]
+                                             #:sparseResidencyBuffer [sparseResidencyBuffer VK_FALSE]
+                                             #:sparseResidencyImage2D [sparseResidencyImage2D VK_FALSE]
+                                             #:sparseResidencyImage3D [sparseResidencyImage3D VK_FALSE]
+                                             #:sparseResidency2Samples [sparseResidency2Samples VK_FALSE]
+                                             #:sparseResidency4Samples [sparseResidency4Samples VK_FALSE]
+                                             #:sparseResidency8Samples [sparseResidency8Samples VK_FALSE]
+                                             #:sparseResidency16Samples [sparseResidency16Samples VK_FALSE]
+                                             #:sparseResidencyAliased [sparseResidencyAliased VK_FALSE]
+                                             #:variableMultisampleRate [variableMultisampleRate VK_FALSE]
+                                             #:inheritedQueries [inheritedQueries VK_FALSE])
+                                    
+  (rkm-physical-device-features (make-VkPhysicalDeviceFeatures robustBufferAccess
+                                                               fullDrawIndexUint32
+                                                               imageCubeArray
+                                                               independentBlend
+                                                               geometryShader
+                                                               tessellationShader
+                                                               sampleRateShading
+                                                               dualSrcBlend
+                                                               logicOp
+                                                               multiDrawIndirect
+                                                               drawIndirectFirstInstance
+                                                               depthClamp
+                                                               depthBiasClamp
+                                                               fillModeNonSolid
+                                                               depthBounds
+                                                               wideLines
+                                                               largePoints
+                                                               alphaToOne
+                                                               multiViewport
+                                                               samplerAnisotropy
+                                                               textureCompressionETC2
+                                                               textureCompressionASTC_LDR
+                                                               textureCompressionBC
+                                                               occlusionQueryPrecise
+                                                               pipelineStatisticsQuery
+                                                               vertexPipelineStoresAndAtomics
+                                                               fragmentStoresAndAtomics
+                                                               shaderTessellationAndGeometryPointSize
+                                                               shaderImageGatherExtended
+                                                               shaderStorageImageExtendedFormats
+                                                               shaderStorageImageMultisample
+                                                               shaderStorageImageReadWithoutFormat
+                                                               shaderStorageImageWriteWithoutFormat
+                                                               shaderUniformBufferArrayDynamicIndexing
+                                                               shaderSampledImageArrayDynamicIndexing
+                                                               shaderStorageBufferArrayDynamicIndexing
+                                                               shaderStorageImageArrayDynamicIndexing
+                                                               shaderClipDistance
+                                                               shaderCullDistance
+                                                               shaderFloat64
+                                                               shaderInt64
+                                                               shaderInt16
+                                                               shaderResourceResidency
+                                                               shaderResourceMinLod
+                                                               sparseBinding
+                                                               sparseResidencyBuffer
+                                                               sparseResidencyImage2D
+                                                               sparseResidencyImage3D
+                                                               sparseResidency2Samples
+                                                               sparseResidency4Samples
+                                                               sparseResidency8Samples
+                                                               sparseResidency16Samples
+                                                               sparseResidencyAliased
+                                                               variableMultisampleRate
+                                                               inheritedQueries)))
+
+
+
+(define (check-available-features vk-wanted-features vk-supported-features)
+
+  (define (vk-implies vk-bool1 vk-bool2)
+    (implies (equal? vk-bool1 VK_TRUE) (equal? vk-bool2 VK_TRUE)))
+
+  (and (vk-implies (VkPhysicalDeviceFeatures-robustBufferAccess vk-wanted-features) (VkPhysicalDeviceFeatures-robustBufferAccess vk-supported-features))
+       (vk-implies (VkPhysicalDeviceFeatures-fullDrawIndexUint32 vk-wanted-features) (VkPhysicalDeviceFeatures-fullDrawIndexUint32 vk-supported-features))
+       (vk-implies (VkPhysicalDeviceFeatures-imageCubeArray vk-wanted-features) (VkPhysicalDeviceFeatures-imageCubeArray vk-supported-features))
+       (vk-implies (VkPhysicalDeviceFeatures-independentBlend vk-wanted-features) (VkPhysicalDeviceFeatures-independentBlend vk-supported-features))
+       (vk-implies (VkPhysicalDeviceFeatures-geometryShader vk-wanted-features) (VkPhysicalDeviceFeatures-geometryShader vk-supported-features))
+       (vk-implies (VkPhysicalDeviceFeatures-tessellationShader vk-wanted-features) (VkPhysicalDeviceFeatures-tessellationShader vk-supported-features))
+       (vk-implies (VkPhysicalDeviceFeatures-sampleRateShading vk-wanted-features) (VkPhysicalDeviceFeatures-sampleRateShading vk-supported-features))
+       (vk-implies (VkPhysicalDeviceFeatures-dualSrcBlend vk-wanted-features) (VkPhysicalDeviceFeatures-dualSrcBlend vk-supported-features))
+       (vk-implies (VkPhysicalDeviceFeatures-logicOp vk-wanted-features) (VkPhysicalDeviceFeatures-logicOp vk-supported-features))
+       (vk-implies (VkPhysicalDeviceFeatures-multiDrawIndirect vk-wanted-features) (VkPhysicalDeviceFeatures-multiDrawIndirect vk-supported-features))
+       (vk-implies (VkPhysicalDeviceFeatures-drawIndirectFirstInstance vk-wanted-features) (VkPhysicalDeviceFeatures-drawIndirectFirstInstance vk-supported-features))
+       (vk-implies (VkPhysicalDeviceFeatures-depthClamp vk-wanted-features) (VkPhysicalDeviceFeatures-depthClamp vk-supported-features))
+       (vk-implies (VkPhysicalDeviceFeatures-depthBiasClamp vk-wanted-features) (VkPhysicalDeviceFeatures-depthBiasClamp vk-supported-features))
+       (vk-implies (VkPhysicalDeviceFeatures-fillModeNonSolid vk-wanted-features) (VkPhysicalDeviceFeatures-fillModeNonSolid vk-supported-features))
+       (vk-implies (VkPhysicalDeviceFeatures-depthBounds vk-wanted-features) (VkPhysicalDeviceFeatures-depthBounds vk-supported-features))
+       (vk-implies (VkPhysicalDeviceFeatures-wideLines vk-wanted-features) (VkPhysicalDeviceFeatures-wideLines vk-supported-features))
+       (vk-implies (VkPhysicalDeviceFeatures-largePoints vk-wanted-features) (VkPhysicalDeviceFeatures-largePoints vk-supported-features))
+       (vk-implies (VkPhysicalDeviceFeatures-alphaToOne vk-wanted-features) (VkPhysicalDeviceFeatures-alphaToOne vk-supported-features))
+       (vk-implies (VkPhysicalDeviceFeatures-multiViewport vk-wanted-features) (VkPhysicalDeviceFeatures-multiViewport vk-supported-features))
+       (vk-implies (VkPhysicalDeviceFeatures-samplerAnisotropy vk-wanted-features) (VkPhysicalDeviceFeatures-samplerAnisotropy vk-supported-features))
+       (vk-implies (VkPhysicalDeviceFeatures-textureCompressionETC2 vk-wanted-features) (VkPhysicalDeviceFeatures-textureCompressionETC2 vk-supported-features))
+       (vk-implies (VkPhysicalDeviceFeatures-textureCompressionASTC_LDR vk-wanted-features) (VkPhysicalDeviceFeatures-textureCompressionASTC_LDR vk-supported-features))
+       (vk-implies (VkPhysicalDeviceFeatures-textureCompressionBC vk-wanted-features) (VkPhysicalDeviceFeatures-textureCompressionBC vk-supported-features))
+       (vk-implies (VkPhysicalDeviceFeatures-occlusionQueryPrecise vk-wanted-features) (VkPhysicalDeviceFeatures-occlusionQueryPrecise vk-supported-features))
+       (vk-implies (VkPhysicalDeviceFeatures-pipelineStatisticsQuery vk-wanted-features) (VkPhysicalDeviceFeatures-pipelineStatisticsQuery vk-supported-features))
+       (vk-implies (VkPhysicalDeviceFeatures-vertexPipelineStoresAndAtomics vk-wanted-features) (VkPhysicalDeviceFeatures-vertexPipelineStoresAndAtomics vk-supported-features))
+       (vk-implies (VkPhysicalDeviceFeatures-fragmentStoresAndAtomics vk-wanted-features) (VkPhysicalDeviceFeatures-fragmentStoresAndAtomics vk-supported-features))
+       (vk-implies (VkPhysicalDeviceFeatures-shaderTessellationAndGeometryPointSize vk-wanted-features) (VkPhysicalDeviceFeatures-shaderTessellationAndGeometryPointSize vk-supported-features))
+       (vk-implies (VkPhysicalDeviceFeatures-shaderImageGatherExtended vk-wanted-features) (VkPhysicalDeviceFeatures-shaderImageGatherExtended vk-supported-features))
+       (vk-implies (VkPhysicalDeviceFeatures-shaderStorageImageExtendedFormats vk-wanted-features) (VkPhysicalDeviceFeatures-shaderStorageImageExtendedFormats vk-supported-features))
+       (vk-implies (VkPhysicalDeviceFeatures-shaderStorageImageMultisample vk-wanted-features) (VkPhysicalDeviceFeatures-shaderStorageImageMultisample vk-supported-features))
+       (vk-implies (VkPhysicalDeviceFeatures-shaderStorageImageReadWithoutFormat vk-wanted-features) (VkPhysicalDeviceFeatures-shaderStorageImageReadWithoutFormat vk-supported-features))
+       (vk-implies (VkPhysicalDeviceFeatures-shaderStorageImageWriteWithoutFormat vk-wanted-features) (VkPhysicalDeviceFeatures-shaderStorageImageWriteWithoutFormat vk-supported-features))
+       (vk-implies (VkPhysicalDeviceFeatures-shaderUniformBufferArrayDynamicIndexing vk-wanted-features) (VkPhysicalDeviceFeatures-shaderUniformBufferArrayDynamicIndexing vk-supported-features))
+       (vk-implies (VkPhysicalDeviceFeatures-shaderSampledImageArrayDynamicIndexing vk-wanted-features) (VkPhysicalDeviceFeatures-shaderSampledImageArrayDynamicIndexing vk-supported-features))
+       (vk-implies (VkPhysicalDeviceFeatures-shaderStorageBufferArrayDynamicIndexing vk-wanted-features) (VkPhysicalDeviceFeatures-shaderStorageBufferArrayDynamicIndexing vk-supported-features))
+       (vk-implies (VkPhysicalDeviceFeatures-shaderStorageImageArrayDynamicIndexing vk-wanted-features) (VkPhysicalDeviceFeatures-shaderStorageImageArrayDynamicIndexing vk-supported-features))
+       (vk-implies (VkPhysicalDeviceFeatures-shaderClipDistance vk-wanted-features) (VkPhysicalDeviceFeatures-shaderClipDistance vk-supported-features))
+       (vk-implies (VkPhysicalDeviceFeatures-shaderCullDistance vk-wanted-features) (VkPhysicalDeviceFeatures-shaderCullDistance vk-supported-features))
+       (vk-implies (VkPhysicalDeviceFeatures-shaderFloat64 vk-wanted-features) (VkPhysicalDeviceFeatures-shaderFloat64 vk-supported-features))
+       (vk-implies (VkPhysicalDeviceFeatures-shaderInt64 vk-wanted-features) (VkPhysicalDeviceFeatures-shaderInt64 vk-supported-features))
+       (vk-implies (VkPhysicalDeviceFeatures-shaderInt16 vk-wanted-features) (VkPhysicalDeviceFeatures-shaderInt16 vk-supported-features))
+       (vk-implies (VkPhysicalDeviceFeatures-shaderResourceResidency vk-wanted-features) (VkPhysicalDeviceFeatures-shaderResourceResidency vk-supported-features))
+       (vk-implies (VkPhysicalDeviceFeatures-shaderResourceMinLod vk-wanted-features) (VkPhysicalDeviceFeatures-shaderResourceMinLod vk-supported-features))
+       (vk-implies (VkPhysicalDeviceFeatures-sparseBinding vk-wanted-features) (VkPhysicalDeviceFeatures-sparseBinding vk-supported-features))
+       (vk-implies (VkPhysicalDeviceFeatures-sparseResidencyBuffer vk-wanted-features) (VkPhysicalDeviceFeatures-sparseResidencyBuffer vk-supported-features))
+       (vk-implies (VkPhysicalDeviceFeatures-sparseResidencyImage2D vk-wanted-features) (VkPhysicalDeviceFeatures-sparseResidencyImage2D vk-supported-features))
+       (vk-implies (VkPhysicalDeviceFeatures-sparseResidencyImage3D vk-wanted-features) (VkPhysicalDeviceFeatures-sparseResidencyImage3D vk-supported-features))
+       (vk-implies (VkPhysicalDeviceFeatures-sparseResidency2Samples vk-wanted-features) (VkPhysicalDeviceFeatures-sparseResidency2Samples vk-supported-features))
+       (vk-implies (VkPhysicalDeviceFeatures-sparseResidency4Samples vk-wanted-features) (VkPhysicalDeviceFeatures-sparseResidency4Samples vk-supported-features))
+       (vk-implies (VkPhysicalDeviceFeatures-sparseResidency8Samples vk-wanted-features) (VkPhysicalDeviceFeatures-sparseResidency8Samples vk-supported-features))
+       (vk-implies (VkPhysicalDeviceFeatures-sparseResidency16Samples vk-wanted-features) (VkPhysicalDeviceFeatures-sparseResidency16Samples vk-supported-features))
+       (vk-implies (VkPhysicalDeviceFeatures-sparseResidencyAliased vk-wanted-features) (VkPhysicalDeviceFeatures-sparseResidencyAliased vk-supported-features))
+       (vk-implies (VkPhysicalDeviceFeatures-variableMultisampleRate vk-wanted-features) (VkPhysicalDeviceFeatures-variableMultisampleRate vk-supported-features))
+       (vk-implies (VkPhysicalDeviceFeatures-inheritedQueries vk-wanted-features) (VkPhysicalDeviceFeatures-inheritedQueries vk-supported-features))))
+
+
 
 ; Comprueba la disponibilidad de las caracteristicas del dispositivo
-(define (check-features vk-physical-device checker)
+#|(define (check-features vk-physical-device wanted-features)
 
-  (define features (make-cvar _VkPhysicalDeviceFeatures))
-  (vkGetPhysicalDeviceFeatures vk-physical-device (cvar-ptr features))
+  (define vk-wanted-features (rkm-features-vk-features wanted-features)) 
 
-  (checker (cvar-ref features)))
+  (define cv-available-features (make-cvar _VkPhysicalDeviceFeatures))
+  (vkGetPhysicalDeviceFeatures vk-physical-device (cvar-ptr cv-available-features))
+
+  (check-available-features vk-wanted-features (cvar-ref cv-available-features)))|#
 
 
 ; --- surface presentation ---
@@ -155,17 +338,26 @@
 
 
 ; Devuelve un dispositivo que cumpla con los requerimientos
-(define (get-physical-device vk-instance vk-surface type extensions queue-flags features-checker)
+(define (rkm-get-physical-device instance #:surface [surface #f] #:type [type VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU] 
+                                 #:extensions [extensions (list VK_KHR_SWAPCHAIN_EXTENSION_NAME)] 
+                                 #:queue-flags [queue-flags (bitwise-ior VK_QUEUE_GRAPHICS_BIT
+                                                                         VK_QUEUE_TRANSFER_BIT
+                                                                         VK_QUEUE_COMPUTE_BIT)] 
+                                 #:features [wanted-features #f])
+
+  (define vk-instance (rkm-instance-vk-instance instance))
+  (define vk-surface (and surface (rkm-surface-vk-surface surface)))
+  (define vk-wanted-features (rkm-physical-device-features-vk-physical-device-features wanted-features))
 
   (define physical-devices (enumerate-physical-devices vk-instance))
 
   (define the-physical-device
     (for/or ([vk-physical-device physical-devices])
-      (if (and (check-type vk-physical-device type)
-               (check-extension-support vk-physical-device extensions)
-               (check-queue-family-support vk-physical-device queue-flags vk-surface)
-               (check-features vk-physical-device features-checker)
-               (check-surface-presentation-support vk-physical-device vk-surface))
+      (if (and (implies type (check-type vk-physical-device type))
+               (implies extensions (check-extension-support vk-physical-device extensions))
+               (implies vk-surface (check-queue-family-support vk-physical-device queue-flags vk-surface))
+               (implies wanted-features (check-features vk-physical-device wanted-features))
+               (implies vk-surface (check-surface-presentation-support vk-physical-device vk-surface)))
           vk-physical-device
           #f)))
 

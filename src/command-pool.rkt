@@ -15,7 +15,7 @@
 
   (define command-pool-info (make-VkCommandPoolCreateInfo VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO
                                                           #f
-                                                          0
+                                                          VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT
                                                           index-family))
 
   (define command-pool (make-cvar _VkCommandPool))
