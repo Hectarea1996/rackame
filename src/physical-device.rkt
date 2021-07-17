@@ -3,20 +3,42 @@
 
 (require "cvar.rkt"
          "array.rkt"
+         "instance.rkt"
+         "surface.rkt"
          vulkan/unsafe
          racket/bool
          ffi/cvector
          ffi/unsafe)
 
-(provide get-physical-device
-         get-family-queues-properties
+(provide (struct-out rkm-physical-device)
+         (struct-out rkm-physical-device-features)
+         rkm-get-physical-device
+         rkm-create-physical-device-features
+         rkm-get-family-queues-properties
+         
          get-surface-formats
          get-surface-present-modes
          get-surface-capabilities)
 
+; ----------------------------------------------------
+; ------------------- Estructuras --------------------
+; ----------------------------------------------------
 
-; --- physical devices ---
+; Estructura de un dispositivo fisico
+(struct rkm-physical-device
+  (vk-physical-device))
 
+
+; Estructura de las caracteristicas de un dispositivo fisico
+(struct rkm-physical-device-features
+  (vk-physical-device-features))
+
+
+; ----------------------------------------------------
+; ---------------- Funciones privadas ----------------
+; ----------------------------------------------------
+
+; --- Dispositivos disponibles ---
 
 ; Retorna una lista con todos los dispositivos
 (define (enumerate-physical-devices vk-instance)
@@ -31,20 +53,18 @@
   (cvector->list physical-devices))
 
 
-; --- device type ---
-
+; --- Tipo de dispositivo ---
 
 ; Comprueba que un dispositivo es de cierto tipo
-(define (check-type physical-device type)
+(define (check-type vk-physical-device type)
 
   (define properties (make-cvar _VkPhysicalDeviceProperties))
-  (vkGetPhysicalDeviceProperties physical-device (cvar-ptr properties))
+  (vkGetPhysicalDeviceProperties vk-physical-device (cvar-ptr properties))
 
   (equal? (VkPhysicalDeviceProperties-deviceType (cvar-ref properties)) type))
 
 
-; --- device extensions ---
-
+; --- Extensiones del dispositivo ---
 
 ; Devuelve las extensiones disponibles en el dispositivo
 (define (get-available-extensions vk-physical-device)
@@ -67,8 +87,7 @@
       (equal? required-extension (array->bytes (VkExtensionProperties-extensionName available-extension))))))
 
 
-; --- family queues ---
-
+; --- Familias de colas ---
 
 ; Devuelve las propiedades de las familias de colas de un dispositivo
 (define (get-family-queues-properties vk-physical-device)
@@ -95,12 +114,166 @@
     (values current-flags current-present-queue (and (equal? current-flags required-flags) current-present-queue))))
 
 
-; --- device features ---
+; --- Caracteristicas del dispositivo ---
 
-(struct rkm-physical-device-features
-  (vk-physical-device-features))
+; Comprueba la disponibilidad de las caracteristicas de un dispositivo
+(define (check-available-features vk-wanted-features vk-supported-features)
+
+  (define (vk-implies vk-bool1 vk-bool2)
+    (implies (equal? vk-bool1 VK_TRUE) (equal? vk-bool2 VK_TRUE)))
+
+  (and (vk-implies (VkPhysicalDeviceFeatures-robustBufferAccess vk-wanted-features) (VkPhysicalDeviceFeatures-robustBufferAccess vk-supported-features))
+       (vk-implies (VkPhysicalDeviceFeatures-fullDrawIndexUint32 vk-wanted-features) (VkPhysicalDeviceFeatures-fullDrawIndexUint32 vk-supported-features))
+       (vk-implies (VkPhysicalDeviceFeatures-imageCubeArray vk-wanted-features) (VkPhysicalDeviceFeatures-imageCubeArray vk-supported-features))
+       (vk-implies (VkPhysicalDeviceFeatures-independentBlend vk-wanted-features) (VkPhysicalDeviceFeatures-independentBlend vk-supported-features))
+       (vk-implies (VkPhysicalDeviceFeatures-geometryShader vk-wanted-features) (VkPhysicalDeviceFeatures-geometryShader vk-supported-features))
+       (vk-implies (VkPhysicalDeviceFeatures-tessellationShader vk-wanted-features) (VkPhysicalDeviceFeatures-tessellationShader vk-supported-features))
+       (vk-implies (VkPhysicalDeviceFeatures-sampleRateShading vk-wanted-features) (VkPhysicalDeviceFeatures-sampleRateShading vk-supported-features))
+       (vk-implies (VkPhysicalDeviceFeatures-dualSrcBlend vk-wanted-features) (VkPhysicalDeviceFeatures-dualSrcBlend vk-supported-features))
+       (vk-implies (VkPhysicalDeviceFeatures-logicOp vk-wanted-features) (VkPhysicalDeviceFeatures-logicOp vk-supported-features))
+       (vk-implies (VkPhysicalDeviceFeatures-multiDrawIndirect vk-wanted-features) (VkPhysicalDeviceFeatures-multiDrawIndirect vk-supported-features))
+       (vk-implies (VkPhysicalDeviceFeatures-drawIndirectFirstInstance vk-wanted-features) (VkPhysicalDeviceFeatures-drawIndirectFirstInstance vk-supported-features))
+       (vk-implies (VkPhysicalDeviceFeatures-depthClamp vk-wanted-features) (VkPhysicalDeviceFeatures-depthClamp vk-supported-features))
+       (vk-implies (VkPhysicalDeviceFeatures-depthBiasClamp vk-wanted-features) (VkPhysicalDeviceFeatures-depthBiasClamp vk-supported-features))
+       (vk-implies (VkPhysicalDeviceFeatures-fillModeNonSolid vk-wanted-features) (VkPhysicalDeviceFeatures-fillModeNonSolid vk-supported-features))
+       (vk-implies (VkPhysicalDeviceFeatures-depthBounds vk-wanted-features) (VkPhysicalDeviceFeatures-depthBounds vk-supported-features))
+       (vk-implies (VkPhysicalDeviceFeatures-wideLines vk-wanted-features) (VkPhysicalDeviceFeatures-wideLines vk-supported-features))
+       (vk-implies (VkPhysicalDeviceFeatures-largePoints vk-wanted-features) (VkPhysicalDeviceFeatures-largePoints vk-supported-features))
+       (vk-implies (VkPhysicalDeviceFeatures-alphaToOne vk-wanted-features) (VkPhysicalDeviceFeatures-alphaToOne vk-supported-features))
+       (vk-implies (VkPhysicalDeviceFeatures-multiViewport vk-wanted-features) (VkPhysicalDeviceFeatures-multiViewport vk-supported-features))
+       (vk-implies (VkPhysicalDeviceFeatures-samplerAnisotropy vk-wanted-features) (VkPhysicalDeviceFeatures-samplerAnisotropy vk-supported-features))
+       (vk-implies (VkPhysicalDeviceFeatures-textureCompressionETC2 vk-wanted-features) (VkPhysicalDeviceFeatures-textureCompressionETC2 vk-supported-features))
+       (vk-implies (VkPhysicalDeviceFeatures-textureCompressionASTC_LDR vk-wanted-features) (VkPhysicalDeviceFeatures-textureCompressionASTC_LDR vk-supported-features))
+       (vk-implies (VkPhysicalDeviceFeatures-textureCompressionBC vk-wanted-features) (VkPhysicalDeviceFeatures-textureCompressionBC vk-supported-features))
+       (vk-implies (VkPhysicalDeviceFeatures-occlusionQueryPrecise vk-wanted-features) (VkPhysicalDeviceFeatures-occlusionQueryPrecise vk-supported-features))
+       (vk-implies (VkPhysicalDeviceFeatures-pipelineStatisticsQuery vk-wanted-features) (VkPhysicalDeviceFeatures-pipelineStatisticsQuery vk-supported-features))
+       (vk-implies (VkPhysicalDeviceFeatures-vertexPipelineStoresAndAtomics vk-wanted-features) (VkPhysicalDeviceFeatures-vertexPipelineStoresAndAtomics vk-supported-features))
+       (vk-implies (VkPhysicalDeviceFeatures-fragmentStoresAndAtomics vk-wanted-features) (VkPhysicalDeviceFeatures-fragmentStoresAndAtomics vk-supported-features))
+       (vk-implies (VkPhysicalDeviceFeatures-shaderTessellationAndGeometryPointSize vk-wanted-features) (VkPhysicalDeviceFeatures-shaderTessellationAndGeometryPointSize vk-supported-features))
+       (vk-implies (VkPhysicalDeviceFeatures-shaderImageGatherExtended vk-wanted-features) (VkPhysicalDeviceFeatures-shaderImageGatherExtended vk-supported-features))
+       (vk-implies (VkPhysicalDeviceFeatures-shaderStorageImageExtendedFormats vk-wanted-features) (VkPhysicalDeviceFeatures-shaderStorageImageExtendedFormats vk-supported-features))
+       (vk-implies (VkPhysicalDeviceFeatures-shaderStorageImageMultisample vk-wanted-features) (VkPhysicalDeviceFeatures-shaderStorageImageMultisample vk-supported-features))
+       (vk-implies (VkPhysicalDeviceFeatures-shaderStorageImageReadWithoutFormat vk-wanted-features) (VkPhysicalDeviceFeatures-shaderStorageImageReadWithoutFormat vk-supported-features))
+       (vk-implies (VkPhysicalDeviceFeatures-shaderStorageImageWriteWithoutFormat vk-wanted-features) (VkPhysicalDeviceFeatures-shaderStorageImageWriteWithoutFormat vk-supported-features))
+       (vk-implies (VkPhysicalDeviceFeatures-shaderUniformBufferArrayDynamicIndexing vk-wanted-features) (VkPhysicalDeviceFeatures-shaderUniformBufferArrayDynamicIndexing vk-supported-features))
+       (vk-implies (VkPhysicalDeviceFeatures-shaderSampledImageArrayDynamicIndexing vk-wanted-features) (VkPhysicalDeviceFeatures-shaderSampledImageArrayDynamicIndexing vk-supported-features))
+       (vk-implies (VkPhysicalDeviceFeatures-shaderStorageBufferArrayDynamicIndexing vk-wanted-features) (VkPhysicalDeviceFeatures-shaderStorageBufferArrayDynamicIndexing vk-supported-features))
+       (vk-implies (VkPhysicalDeviceFeatures-shaderStorageImageArrayDynamicIndexing vk-wanted-features) (VkPhysicalDeviceFeatures-shaderStorageImageArrayDynamicIndexing vk-supported-features))
+       (vk-implies (VkPhysicalDeviceFeatures-shaderClipDistance vk-wanted-features) (VkPhysicalDeviceFeatures-shaderClipDistance vk-supported-features))
+       (vk-implies (VkPhysicalDeviceFeatures-shaderCullDistance vk-wanted-features) (VkPhysicalDeviceFeatures-shaderCullDistance vk-supported-features))
+       (vk-implies (VkPhysicalDeviceFeatures-shaderFloat64 vk-wanted-features) (VkPhysicalDeviceFeatures-shaderFloat64 vk-supported-features))
+       (vk-implies (VkPhysicalDeviceFeatures-shaderInt64 vk-wanted-features) (VkPhysicalDeviceFeatures-shaderInt64 vk-supported-features))
+       (vk-implies (VkPhysicalDeviceFeatures-shaderInt16 vk-wanted-features) (VkPhysicalDeviceFeatures-shaderInt16 vk-supported-features))
+       (vk-implies (VkPhysicalDeviceFeatures-shaderResourceResidency vk-wanted-features) (VkPhysicalDeviceFeatures-shaderResourceResidency vk-supported-features))
+       (vk-implies (VkPhysicalDeviceFeatures-shaderResourceMinLod vk-wanted-features) (VkPhysicalDeviceFeatures-shaderResourceMinLod vk-supported-features))
+       (vk-implies (VkPhysicalDeviceFeatures-sparseBinding vk-wanted-features) (VkPhysicalDeviceFeatures-sparseBinding vk-supported-features))
+       (vk-implies (VkPhysicalDeviceFeatures-sparseResidencyBuffer vk-wanted-features) (VkPhysicalDeviceFeatures-sparseResidencyBuffer vk-supported-features))
+       (vk-implies (VkPhysicalDeviceFeatures-sparseResidencyImage2D vk-wanted-features) (VkPhysicalDeviceFeatures-sparseResidencyImage2D vk-supported-features))
+       (vk-implies (VkPhysicalDeviceFeatures-sparseResidencyImage3D vk-wanted-features) (VkPhysicalDeviceFeatures-sparseResidencyImage3D vk-supported-features))
+       (vk-implies (VkPhysicalDeviceFeatures-sparseResidency2Samples vk-wanted-features) (VkPhysicalDeviceFeatures-sparseResidency2Samples vk-supported-features))
+       (vk-implies (VkPhysicalDeviceFeatures-sparseResidency4Samples vk-wanted-features) (VkPhysicalDeviceFeatures-sparseResidency4Samples vk-supported-features))
+       (vk-implies (VkPhysicalDeviceFeatures-sparseResidency8Samples vk-wanted-features) (VkPhysicalDeviceFeatures-sparseResidency8Samples vk-supported-features))
+       (vk-implies (VkPhysicalDeviceFeatures-sparseResidency16Samples vk-wanted-features) (VkPhysicalDeviceFeatures-sparseResidency16Samples vk-supported-features))
+       (vk-implies (VkPhysicalDeviceFeatures-sparseResidencyAliased vk-wanted-features) (VkPhysicalDeviceFeatures-sparseResidencyAliased vk-supported-features))
+       (vk-implies (VkPhysicalDeviceFeatures-variableMultisampleRate vk-wanted-features) (VkPhysicalDeviceFeatures-variableMultisampleRate vk-supported-features))
+       (vk-implies (VkPhysicalDeviceFeatures-inheritedQueries vk-wanted-features) (VkPhysicalDeviceFeatures-inheritedQueries vk-supported-features))))
 
 
+; --- Presentacion de una surface ---
+
+; Devuelve las prestaciones de una surface
+(define (get-surface-capabilities vk-physical-device vk-surface)
+
+  (define capabilities (make-cvar _VkSurfaceCapabilitiesKHR))
+  (vkGetPhysicalDeviceSurfaceCapabilitiesKHR vk-physical-device vk-surface (cvar-ptr capabilities))
+
+  (cvar-ref capabilities))
+
+
+; Devuelve los formatos disponibles de un surface en el dispositivo
+(define (get-surface-formats vk-physical-device vk-surface)
+
+  (define format-count (make-cvar _uint32))
+  (vkGetPhysicalDeviceSurfaceFormatsKHR vk-physical-device vk-surface (cvar-ptr format-count) #f)
+  (define formats (make-cvector _VkSurfaceFormatKHR (cvar-ref format-count)))
+  (vkGetPhysicalDeviceSurfaceFormatsKHR vk-physical-device vk-surface (cvar-ptr format-count) (cvector-ptr formats))
+
+  (cvector->list formats))
+
+
+; Devuelve los modos de presentacion de un surface en el dispositivo
+(define (get-surface-present-modes vk-physical-device vk-surface)
+
+  (define mode-count (make-cvar _uint32))
+  (vkGetPhysicalDeviceSurfacePresentModesKHR vk-physical-device vk-surface (cvar-ptr mode-count) #f)
+  (define present-modes (make-cvector _VkPresentModeKHR (cvar-ref mode-count)))
+  (vkGetPhysicalDeviceSurfacePresentModesKHR vk-physical-device vk-surface (cvar-ptr mode-count) (cvector-ptr present-modes))
+
+  (cvector->list present-modes))
+
+
+; Comprueba la validez de un surface
+(define (check-surface-presentation-support vk-physical-device vk-surface)
+
+  (define surface-formats (get-surface-formats vk-physical-device vk-surface))
+  (define surface-present-modes (get-surface-present-modes vk-physical-device vk-surface))
+
+  (and (not (null? surface-formats)) (not (null? surface-present-modes))))
+
+
+; --- Tipo de memoria ---
+
+; Devuelve el tipo de memoria que cumple unos requisitos
+(define (get-memory-type vk-physical-device type-filter property-flags)
+
+  (define mem-properties (make-cvar _VkPhysicalDeviceMemoryProperties))
+  (vkGetPhysicalDeviceMemoryProperties vk-physical-device (cvar-ptr mem-properties))
+
+  (define mem-type
+    (for/or ([i (build-list (VkPhysicalDeviceMemoryProperties-memoryTypeCount (cvar-ref mem-properties)) values)])
+      (if (and (not (zero? (bitwise-and type-filter (arithmetic-shift 1 i))))
+               (bitwise-and (VkMemoryType-propertyFlags
+                             (array-ref (VkPhysicalDeviceMemoryProperties-memoryTypes (cvar-ref mem-properties)) i)
+                             property-flags)))
+          i
+          #f)))
+
+  (when (not mem-type)
+    (error 'get-memory-type "No existe un tipo de memoria con los requisitos necesarios."))
+  mem-type)
+
+
+; --- format ---
+
+; Devuelve un formato que verifique unos requisitos.
+(define (get-format vk-physical-device possible-formats tiling features)
+
+  (define the-format
+    (for/or ([format possible-formats])
+      (define format-properties (make-cvar _VkFormatProperties))
+      (vkGetPhysicalDeviceFormatProperties vk-physical-device format (cvar-ptr format-properties))
+
+      (cond
+        [(and (equal? tiling VK_IMAGE_TILING_LINEAR)
+              (equal? (bitwise-and (VkFormatProperties-linearTilingFeatures (cvar-ref format-properties)) features) features))
+         format]
+        [(and (equal? tiling VK_IMAGE_TILING_OPTIMAL)
+              (equal? (bitwise-and (VkFormatProperties-optimalTilingFeatures (cvar-ref format-properties)) features) features))
+         format]
+        [else #f])))
+
+  (when (not the-format)
+    (error 'get-format "No se encuentra ningun formato con los requisitos necesarios."))
+  the-format)
+
+
+; ----------------------------------------------------
+; ---------------- Funciones publicas ----------------
+; ----------------------------------------------------
+
+; --- Caracteristicas del dispositivo ---
+
+; Crea una estructura de caracteristicas de un dispositivo
 (define (rkm-create-physical-device-features #:robustBufferAccess [robustBufferAccess VK_FALSE]
                                              #:fullDrawIndexUint32 [fullDrawIndexUint32 VK_FALSE]
                                              #:imageCubeArray [imageCubeArray VK_FALSE]
@@ -214,128 +387,7 @@
                                                                inheritedQueries)))
 
 
-
-(define (check-available-features vk-wanted-features vk-supported-features)
-
-  (define (vk-implies vk-bool1 vk-bool2)
-    (implies (equal? vk-bool1 VK_TRUE) (equal? vk-bool2 VK_TRUE)))
-
-  (and (vk-implies (VkPhysicalDeviceFeatures-robustBufferAccess vk-wanted-features) (VkPhysicalDeviceFeatures-robustBufferAccess vk-supported-features))
-       (vk-implies (VkPhysicalDeviceFeatures-fullDrawIndexUint32 vk-wanted-features) (VkPhysicalDeviceFeatures-fullDrawIndexUint32 vk-supported-features))
-       (vk-implies (VkPhysicalDeviceFeatures-imageCubeArray vk-wanted-features) (VkPhysicalDeviceFeatures-imageCubeArray vk-supported-features))
-       (vk-implies (VkPhysicalDeviceFeatures-independentBlend vk-wanted-features) (VkPhysicalDeviceFeatures-independentBlend vk-supported-features))
-       (vk-implies (VkPhysicalDeviceFeatures-geometryShader vk-wanted-features) (VkPhysicalDeviceFeatures-geometryShader vk-supported-features))
-       (vk-implies (VkPhysicalDeviceFeatures-tessellationShader vk-wanted-features) (VkPhysicalDeviceFeatures-tessellationShader vk-supported-features))
-       (vk-implies (VkPhysicalDeviceFeatures-sampleRateShading vk-wanted-features) (VkPhysicalDeviceFeatures-sampleRateShading vk-supported-features))
-       (vk-implies (VkPhysicalDeviceFeatures-dualSrcBlend vk-wanted-features) (VkPhysicalDeviceFeatures-dualSrcBlend vk-supported-features))
-       (vk-implies (VkPhysicalDeviceFeatures-logicOp vk-wanted-features) (VkPhysicalDeviceFeatures-logicOp vk-supported-features))
-       (vk-implies (VkPhysicalDeviceFeatures-multiDrawIndirect vk-wanted-features) (VkPhysicalDeviceFeatures-multiDrawIndirect vk-supported-features))
-       (vk-implies (VkPhysicalDeviceFeatures-drawIndirectFirstInstance vk-wanted-features) (VkPhysicalDeviceFeatures-drawIndirectFirstInstance vk-supported-features))
-       (vk-implies (VkPhysicalDeviceFeatures-depthClamp vk-wanted-features) (VkPhysicalDeviceFeatures-depthClamp vk-supported-features))
-       (vk-implies (VkPhysicalDeviceFeatures-depthBiasClamp vk-wanted-features) (VkPhysicalDeviceFeatures-depthBiasClamp vk-supported-features))
-       (vk-implies (VkPhysicalDeviceFeatures-fillModeNonSolid vk-wanted-features) (VkPhysicalDeviceFeatures-fillModeNonSolid vk-supported-features))
-       (vk-implies (VkPhysicalDeviceFeatures-depthBounds vk-wanted-features) (VkPhysicalDeviceFeatures-depthBounds vk-supported-features))
-       (vk-implies (VkPhysicalDeviceFeatures-wideLines vk-wanted-features) (VkPhysicalDeviceFeatures-wideLines vk-supported-features))
-       (vk-implies (VkPhysicalDeviceFeatures-largePoints vk-wanted-features) (VkPhysicalDeviceFeatures-largePoints vk-supported-features))
-       (vk-implies (VkPhysicalDeviceFeatures-alphaToOne vk-wanted-features) (VkPhysicalDeviceFeatures-alphaToOne vk-supported-features))
-       (vk-implies (VkPhysicalDeviceFeatures-multiViewport vk-wanted-features) (VkPhysicalDeviceFeatures-multiViewport vk-supported-features))
-       (vk-implies (VkPhysicalDeviceFeatures-samplerAnisotropy vk-wanted-features) (VkPhysicalDeviceFeatures-samplerAnisotropy vk-supported-features))
-       (vk-implies (VkPhysicalDeviceFeatures-textureCompressionETC2 vk-wanted-features) (VkPhysicalDeviceFeatures-textureCompressionETC2 vk-supported-features))
-       (vk-implies (VkPhysicalDeviceFeatures-textureCompressionASTC_LDR vk-wanted-features) (VkPhysicalDeviceFeatures-textureCompressionASTC_LDR vk-supported-features))
-       (vk-implies (VkPhysicalDeviceFeatures-textureCompressionBC vk-wanted-features) (VkPhysicalDeviceFeatures-textureCompressionBC vk-supported-features))
-       (vk-implies (VkPhysicalDeviceFeatures-occlusionQueryPrecise vk-wanted-features) (VkPhysicalDeviceFeatures-occlusionQueryPrecise vk-supported-features))
-       (vk-implies (VkPhysicalDeviceFeatures-pipelineStatisticsQuery vk-wanted-features) (VkPhysicalDeviceFeatures-pipelineStatisticsQuery vk-supported-features))
-       (vk-implies (VkPhysicalDeviceFeatures-vertexPipelineStoresAndAtomics vk-wanted-features) (VkPhysicalDeviceFeatures-vertexPipelineStoresAndAtomics vk-supported-features))
-       (vk-implies (VkPhysicalDeviceFeatures-fragmentStoresAndAtomics vk-wanted-features) (VkPhysicalDeviceFeatures-fragmentStoresAndAtomics vk-supported-features))
-       (vk-implies (VkPhysicalDeviceFeatures-shaderTessellationAndGeometryPointSize vk-wanted-features) (VkPhysicalDeviceFeatures-shaderTessellationAndGeometryPointSize vk-supported-features))
-       (vk-implies (VkPhysicalDeviceFeatures-shaderImageGatherExtended vk-wanted-features) (VkPhysicalDeviceFeatures-shaderImageGatherExtended vk-supported-features))
-       (vk-implies (VkPhysicalDeviceFeatures-shaderStorageImageExtendedFormats vk-wanted-features) (VkPhysicalDeviceFeatures-shaderStorageImageExtendedFormats vk-supported-features))
-       (vk-implies (VkPhysicalDeviceFeatures-shaderStorageImageMultisample vk-wanted-features) (VkPhysicalDeviceFeatures-shaderStorageImageMultisample vk-supported-features))
-       (vk-implies (VkPhysicalDeviceFeatures-shaderStorageImageReadWithoutFormat vk-wanted-features) (VkPhysicalDeviceFeatures-shaderStorageImageReadWithoutFormat vk-supported-features))
-       (vk-implies (VkPhysicalDeviceFeatures-shaderStorageImageWriteWithoutFormat vk-wanted-features) (VkPhysicalDeviceFeatures-shaderStorageImageWriteWithoutFormat vk-supported-features))
-       (vk-implies (VkPhysicalDeviceFeatures-shaderUniformBufferArrayDynamicIndexing vk-wanted-features) (VkPhysicalDeviceFeatures-shaderUniformBufferArrayDynamicIndexing vk-supported-features))
-       (vk-implies (VkPhysicalDeviceFeatures-shaderSampledImageArrayDynamicIndexing vk-wanted-features) (VkPhysicalDeviceFeatures-shaderSampledImageArrayDynamicIndexing vk-supported-features))
-       (vk-implies (VkPhysicalDeviceFeatures-shaderStorageBufferArrayDynamicIndexing vk-wanted-features) (VkPhysicalDeviceFeatures-shaderStorageBufferArrayDynamicIndexing vk-supported-features))
-       (vk-implies (VkPhysicalDeviceFeatures-shaderStorageImageArrayDynamicIndexing vk-wanted-features) (VkPhysicalDeviceFeatures-shaderStorageImageArrayDynamicIndexing vk-supported-features))
-       (vk-implies (VkPhysicalDeviceFeatures-shaderClipDistance vk-wanted-features) (VkPhysicalDeviceFeatures-shaderClipDistance vk-supported-features))
-       (vk-implies (VkPhysicalDeviceFeatures-shaderCullDistance vk-wanted-features) (VkPhysicalDeviceFeatures-shaderCullDistance vk-supported-features))
-       (vk-implies (VkPhysicalDeviceFeatures-shaderFloat64 vk-wanted-features) (VkPhysicalDeviceFeatures-shaderFloat64 vk-supported-features))
-       (vk-implies (VkPhysicalDeviceFeatures-shaderInt64 vk-wanted-features) (VkPhysicalDeviceFeatures-shaderInt64 vk-supported-features))
-       (vk-implies (VkPhysicalDeviceFeatures-shaderInt16 vk-wanted-features) (VkPhysicalDeviceFeatures-shaderInt16 vk-supported-features))
-       (vk-implies (VkPhysicalDeviceFeatures-shaderResourceResidency vk-wanted-features) (VkPhysicalDeviceFeatures-shaderResourceResidency vk-supported-features))
-       (vk-implies (VkPhysicalDeviceFeatures-shaderResourceMinLod vk-wanted-features) (VkPhysicalDeviceFeatures-shaderResourceMinLod vk-supported-features))
-       (vk-implies (VkPhysicalDeviceFeatures-sparseBinding vk-wanted-features) (VkPhysicalDeviceFeatures-sparseBinding vk-supported-features))
-       (vk-implies (VkPhysicalDeviceFeatures-sparseResidencyBuffer vk-wanted-features) (VkPhysicalDeviceFeatures-sparseResidencyBuffer vk-supported-features))
-       (vk-implies (VkPhysicalDeviceFeatures-sparseResidencyImage2D vk-wanted-features) (VkPhysicalDeviceFeatures-sparseResidencyImage2D vk-supported-features))
-       (vk-implies (VkPhysicalDeviceFeatures-sparseResidencyImage3D vk-wanted-features) (VkPhysicalDeviceFeatures-sparseResidencyImage3D vk-supported-features))
-       (vk-implies (VkPhysicalDeviceFeatures-sparseResidency2Samples vk-wanted-features) (VkPhysicalDeviceFeatures-sparseResidency2Samples vk-supported-features))
-       (vk-implies (VkPhysicalDeviceFeatures-sparseResidency4Samples vk-wanted-features) (VkPhysicalDeviceFeatures-sparseResidency4Samples vk-supported-features))
-       (vk-implies (VkPhysicalDeviceFeatures-sparseResidency8Samples vk-wanted-features) (VkPhysicalDeviceFeatures-sparseResidency8Samples vk-supported-features))
-       (vk-implies (VkPhysicalDeviceFeatures-sparseResidency16Samples vk-wanted-features) (VkPhysicalDeviceFeatures-sparseResidency16Samples vk-supported-features))
-       (vk-implies (VkPhysicalDeviceFeatures-sparseResidencyAliased vk-wanted-features) (VkPhysicalDeviceFeatures-sparseResidencyAliased vk-supported-features))
-       (vk-implies (VkPhysicalDeviceFeatures-variableMultisampleRate vk-wanted-features) (VkPhysicalDeviceFeatures-variableMultisampleRate vk-supported-features))
-       (vk-implies (VkPhysicalDeviceFeatures-inheritedQueries vk-wanted-features) (VkPhysicalDeviceFeatures-inheritedQueries vk-supported-features))))
-
-
-
-; Comprueba la disponibilidad de las caracteristicas del dispositivo
-#|(define (check-features vk-physical-device wanted-features)
-
-  (define vk-wanted-features (rkm-features-vk-features wanted-features)) 
-
-  (define cv-available-features (make-cvar _VkPhysicalDeviceFeatures))
-  (vkGetPhysicalDeviceFeatures vk-physical-device (cvar-ptr cv-available-features))
-
-  (check-available-features vk-wanted-features (cvar-ref cv-available-features)))|#
-
-
-; --- surface presentation ---
-
-
-; Devuelve las prestaciones de una surface
-(define (get-surface-capabilities vk-physical-device vk-surface)
-
-  (define capabilities (make-cvar _VkSurfaceCapabilitiesKHR))
-  (vkGetPhysicalDeviceSurfaceCapabilitiesKHR vk-physical-device vk-surface (cvar-ptr capabilities))
-
-  (cvar-ref capabilities))
-
-
-
-; Devuelve los formatos de surface disponibles en el dispositivo
-(define (get-surface-formats vk-physical-device vk-surface)
-
-  (define format-count (make-cvar _uint32))
-  (vkGetPhysicalDeviceSurfaceFormatsKHR vk-physical-device vk-surface (cvar-ptr format-count) #f)
-  (define formats (make-cvector _VkSurfaceFormatKHR (cvar-ref format-count)))
-  (vkGetPhysicalDeviceSurfaceFormatsKHR vk-physical-device vk-surface (cvar-ptr format-count) (cvector-ptr formats))
-
-  (cvector->list formats))
-
-
-
-; Devuelve los modos de presentacion de un surface en el dispositivo
-(define (get-surface-present-modes vk-physical-device vk-surface)
-
-  (define mode-count (make-cvar _uint32))
-  (vkGetPhysicalDeviceSurfacePresentModesKHR vk-physical-device vk-surface (cvar-ptr mode-count) #f)
-  (define present-modes (make-cvector _VkPresentModeKHR (cvar-ref mode-count)))
-  (vkGetPhysicalDeviceSurfacePresentModesKHR vk-physical-device vk-surface (cvar-ptr mode-count) (cvector-ptr present-modes))
-
-  (cvector->list present-modes))
-
-
-; Comprueba la validez de un surface
-(define (check-surface-presentation-support vk-physical-device vk-surface)
-
-  (define surface-formats (get-surface-formats vk-physical-device vk-surface))
-  (define surface-present-modes (get-surface-present-modes vk-physical-device vk-surface))
-
-  (and (not (null? surface-formats)) (not (null? surface-present-modes))))
-
-
-; --- physical device ---
-
+; --- Dispositivo fisico ---
 
 ; Devuelve un dispositivo que cumpla con los requerimientos
 (define (rkm-get-physical-device instance #:surface [surface #f] #:type [type VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU] 
@@ -363,52 +415,13 @@
 
   (when (not the-physical-device)
     (error 'get-physical-device "No valid physical device found"))
-  the-physical-device)
+  (rkm-physical-device the-physical-device))
 
 
-; --- memory type ---
+; --- Familias de colas ---
 
-
-; Devuelve el tipo de memoria que cumple unos requisitos
-(define (get-memory-type vk-physical-device type-filter property-flags)
-
-  (define mem-properties (make-cvar _VkPhysicalDeviceMemoryProperties))
-  (vkGetPhysicalDeviceMemoryProperties vk-physical-device (cvar-ptr mem-properties))
-
-  (define mem-type
-    (for/or ([i (build-list (VkPhysicalDeviceMemoryProperties-memoryTypeCount (cvar-ref mem-properties)) values)])
-      (if (and (not (zero? (bitwise-and type-filter (arithmetic-shift 1 i))))
-               (bitwise-and (VkMemoryType-propertyFlags
-                             (array-ref (VkPhysicalDeviceMemoryProperties-memoryTypes (cvar-ref mem-properties)) i)
-                             property-flags)))
-          i
-          #f)))
-
-  (when (not mem-type)
-    (error 'get-memory-type "No existe un tipo de memoria con los requisitos necesarios."))
-  mem-type)
-
-
-; --- format ---
-
-
-; Devuelve un formato que verifique unos requisitos.
-(define (get-format vk-physical-device possible-formats tiling features)
-
-  (define the-format
-    (for/or ([format possible-formats])
-      (define format-properties (make-cvar _VkFormatProperties))
-      (vkGetPhysicalDeviceFormatProperties vk-physical-device format (cvar-ptr format-properties))
-
-      (cond
-        [(and (equal? tiling VK_IMAGE_TILING_LINEAR)
-              (equal? (bitwise-and (VkFormatProperties-linearTilingFeatures (cvar-ref format-properties)) features) features))
-         format]
-        [(and (equal? tiling VK_IMAGE_TILING_OPTIMAL)
-              (equal? (bitwise-and (VkFormatProperties-optimalTilingFeatures (cvar-ref format-properties)) features) features))
-         format]
-        [else #f])))
-
-  (when (not the-format)
-    (error 'get-format "No se encuentra ningun formato con los requisitos necesarios."))
-  the-format)
+; Devuelve las propiedades de las familias de colas de un dispositivo
+(define (rkm-get-family-queues-properties physical-device)
+  
+  (define vk-physical-device (rkm-physical-device-vk-physical-device))
+  (get-family-queues-properties vk-physical-device))

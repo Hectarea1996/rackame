@@ -7,33 +7,56 @@
 (provide get-device-queue)
 
 
+; ----------------------------------------------------
+; ------------------- Estructuras --------------------
+; ----------------------------------------------------
 
+; Estructura de una cola
 (struct rkm-queue
-  (vk-command-pool
-   vk-queue))
+  (vk-queue))
 
+
+; ----------------------------------------------------
+; ---------------- Funciones privadas ----------------
+; ----------------------------------------------------
 
 ; Devuelve una cola del dispositivo
-(define (create-queue device index-family index-queue)
+(define (get-device-queue vk-device index-family index-queue)
 
-  ; Obtenemos la cola
+  (define queue (make-cvar _VkQueue))
+  (vkGetDeviceQueue vk-device index-family index-queue (cvar-ptr queue))
+
+  (rkm-queue (cvar-ref queue)))
+
+
+; Devuelve las colas de una familia
+(define (get-device-queues vk-device index-family queue-count)
+
+  (for/list ([i (build-list queue-count values)])
+    (get-device-queue vk-device index-family i)))
+
+
+; ----------------------------------------------------
+; ---------------- Funciones publicas ----------------
+; ----------------------------------------------------
+
+; Devuelve las colas de una familia de colas
+(define (rkm-get-device-queues device queue-family)
+  
   (define vk-device (rkm-device-vk-device device))
-  (define cv-queue (make-cvar _VkQueue))
-  (vkGetDeviceQueue vk-device index-family 0 (cvar-ptr cv-queue))
-
-  ; Creamos el command pool
-  (define vk-command-pool (create-command-pool vk-device graphics-index))
-
-  (cvar-ref queue))
-
+  (define index-family (rkm-queue-family-index queue-family))
+  (define queue-count (rkm-queue-family-queue-count queue-family))
+  
+  (get-device-queues vk-device index-family queue-count))
 
 
 ; Realiza un submit sobre una queue
-(define (rkm-queue-submit queue submits fence)
+(define (rkm-queue-submit queue submit-infos fence)
 
   (define vk-queue (rkm-queue-vk-queue queue))
-  (define cv-submits-info (list->cvector submits _VkSubmitInfo))
-  (define submit-info-count (cvector-length cv-submits-info))
+  (define cv-submit-infos (list->cvector submit-infos _VkSubmitInfo))
+  (define submit-info-count (cvector-length cv-submit-infos))
   (define vk-fence (rkm-fence-vk-fence fence))
   
-  (vkQueueSubmit vk-queue submit-info-count (cvector-ptr cv-submits-info) vk-fence))
+  (define submit-result (vkQueueSubmit vk-queue submit-info-count (cvector-ptr cv-submit-infos) vk-fence))
+  (check-vkResult submit-result 'rkm-queue-submit))

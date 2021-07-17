@@ -65,8 +65,14 @@
                                               [#:sparseResidency16Samples sparseResidency16Samples VkBool32 #f]
                                               [#:sparseResidencyAliased sparseResidencyAliased VkBool32 #f]
                                               [#:variableMultisampleRate variableMultisampleRate VkBool32 #f]
-                                              [#:inheritedQueries inheritedQueries VkBool32 #f])]{
+                                              [#:inheritedQueries inheritedQueries VkBool32 #f])
+                                              rkm-physical-device-features?]{
     Función que facilita la creación de un objeto de tipo @racket[rkm-physical-device-features].
+}
+
+
+@defstruct[rkm-physical-device ([vk-physical-device VkPhysicalDevice])]{
+    Representa un objeto de tipo VkPhysicalDevice.
 }
 
 
@@ -76,7 +82,8 @@
                                   [#:queue-flags queue-flags VkQueueFlags (bitwise-ior VK_QUEUE_GRAPHICS_BIT
                                                                                        VK_QUEUE_TRANSFER_BIT
                                                                                        VK_QUEUE_COMPUTE_BIT)]
-                                  [#:features wanted-features rkm-physical-device-features #f])]{
+                                  [#:features wanted-features rkm-physical-device-features #f])
+                                  rkm-physical-device?]{
     Obtiene el primer dispositivo físico que cumpla con las siguientes propiedades:
     @itemlist[@item{@racket[surface]: Se comprueba si el dispositivo soporta el @racket[surface] y si soporta
                                       la operación de presentación sobre dicho @racket[surface].}

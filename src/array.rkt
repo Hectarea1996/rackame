@@ -1,7 +1,6 @@
 #lang racket/base
 
-(require racket/stream
-         ffi/unsafe)
+(require ffi/unsafe)
 
 
 (provide array->bytes)
