@@ -98,7 +98,8 @@
     [(_ device command-pool bodies ...) #'(let ([command-buffer (rkm-create-command-buffer device command-pool)])
                                              (rkm-begin-command-buffer command-buffer VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT)
                                              bodies ...
-                                             (rkm-end-command-buffer command-buffer))]))
+                                             (rkm-end-command-buffer command-buffer)
+                                             command-buffer)]))
 
 
 ; Macro para generar un command buffer que debe ser preparado para el submit usando la
@@ -106,9 +107,9 @@
 (define-syntax (rkm-do-command-buffer/proc stx)
   (syntax-case stx ()
     [(_ (args ...) device command-pool bodies ...) #'(let ([command-buffer (rkm-create-command-buffer device command-pool)])
-                                                        (cons command-buffer
-                                                              (lambda (args ...)
-                                                                (rkm-reset-command-buffer command-buffer)
-                                                                (rkm-begin-command-buffer command-buffer VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT)
-                                                                bodies ...
-                                                                (rkm-end-command-buffer command-buffer))))]))
+                                                        (values command-buffer
+                                                                (lambda (args ...)
+                                                                  (rkm-reset-command-buffer command-buffer)
+                                                                  (rkm-begin-command-buffer command-buffer VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT)
+                                                                  bodies ...
+                                                                  (rkm-end-command-buffer command-buffer))))]))
