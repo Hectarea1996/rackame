@@ -102,7 +102,7 @@
   (syntax-case stx ()
     [(do-vk-submit-info (args ...) device wait-sems wait-stages signal-sems pool reset-pool bodies ...)
         #'(let-values ([(command-buffers procs) 
-                        (do-vk-submit-info-aux (args ...) device wait-sems wait-stages signal-sems pool reset-pool bodies ...)])
+                        (do-vk-submit-info-aux (args ...) device pool reset-pool bodies ...)])
             (let ([vk-command-buffers (map (lambda (cb)
                                              (cvar-ref (rkm-command-buffer-cv-command-buffer cb))) command-buffers)]
                   [vk-wait-sems (map rkm-semaphore-vk-semaphore wait-sems)]
@@ -172,7 +172,7 @@
 
 
 ; Macro que crea una funcion que ejecuta cada una de las expresiones
-; que contenga, ademas de realizar los correspondientes queue submits.
+; que contenga, y realiza los correspondientes queue submits.
 (define-syntax (rkm-lambda-submit stx)
 
   (syntax-case stx ()
