@@ -22,15 +22,23 @@ Rackame apunta a ser un software para crear videojuegos usando el lenguaje Racke
 
 @include-section{physical-device.scrbl}
 
+@include-section{queue-family.scrbl}
+
 @include-section{device.scrbl}
 
-@include-section{swapchain.scrbl}
+@include-section{queue.scrbl}
+
+@include-section{command-pool.scrbl}
+
+@include-section{command-buffer.scrbl}
 
 @include-section{semaphore.scrbl}
 
 @include-section{fence.scrbl}
 
-@include-section{command-buffer.scrbl}
+@include-section{swapchain.scrbl}
+
+
 
 
 

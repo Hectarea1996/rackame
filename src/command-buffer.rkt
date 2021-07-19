@@ -3,6 +3,7 @@
 
 (require "device.rkt"
          "cvar.rkt"
+         "command-pool.rkt"
          vulkan/unsafe
          ffi/unsafe
          ffi/unsafe/alloc
@@ -70,7 +71,7 @@
 ; Resetea un command buffer
 (define (rkm-reset-command-buffer command-buffer)
   
-  (define vk-command-buffer (rkm-command-buffer-vk-command-buffer command-buffer))
+  (define vk-command-buffer (cvar-ref (rkm-command-buffer-cv-command-buffer command-buffer)))
   
   (vkResetCommandBuffer vk-command-buffer 0))
   

@@ -2,9 +2,9 @@
 
 
 (require "physical-device.rkt"
+         "queue-family.rkt"
          "instance.rkt"
          "surface.rkt"
-         "command-pool.rkt"
          "window.rkt"
          "cvar.rkt"
          vulkan/unsafe
@@ -14,8 +14,8 @@
          racket/list)
 
 
-(provide rkm-create-device
-         rkm-get-device-queues)
+(provide (struct-out rkm-device)
+         rkm-create-device)
 
 
 ; ----------------------------------------------------
@@ -30,22 +30,6 @@
 ; ----------------------------------------------------
 ; ---------------- Funciones privadas ----------------
 ; ----------------------------------------------------
-
-; Devuelve una cola del dispositivo
-(define (get-device-queue vk-device index-family index-queue)
-
-  (define queue (make-cvar _VkQueue))
-  (vkGetDeviceQueue vk-device index-family index-queue (cvar-ptr queue))
-
-  (cvar-ref queue))
-
-
-; Devuelve las colas de una familia
-(define (get-device-queues vk-device index-family queue-count)
-
-  (for/list ([i (build-list queue-count values)])
-    (get-device-queue vk-device index-family i)))
-
 
 ; Obtiene un dispositivo y devuelve la estructura device.
 (define (create-device physical-device device-features queue-families)
@@ -99,13 +83,3 @@
 
 ; Allocator y destructor de un dispositivo
 (define rkm-create-device ((allocator destroy-device) create-device))
-
-
-; Devuelve las colas de una familia de colas
-(define (rkm-get-device-queues device queue-family)
-  
-  (define vk-device (rkm-device-vk-device device))
-  (define index-family (rkm-queue-family-index queue-family))
-  (define queue-count (rkm-queue-family-queue-count queue-family))
-  
-  (get-device-queues vk-device index-family queue-count))

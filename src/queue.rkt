@@ -2,9 +2,15 @@
 
 
 (require "cvar.rkt"
-         vulkan/unsafe)
+         "device.rkt"
+         "queue-family.rkt"
+         vulkan/unsafe
+         (for-syntax macro-help)
+         ffi/cvector
+         (for-syntax racket/base))
 
-(provide get-device-queue)
+(provide rkm-get-device-queues
+         rkm-lambda-submit)
 
 
 ; ----------------------------------------------------
@@ -40,7 +46,7 @@
 (define (queue-submit vk-queue vk-submit-infos vk-fence)
 
   ;(define vk-queue (rkm-queue-vk-queue queue))
-  (define cv-submit-infos (list->cvector submit-infos _VkSubmitInfo))
+  (define cv-submit-infos (list->cvector vk-submit-infos _VkSubmitInfo))
   (define submit-info-count (cvector-length cv-submit-infos))
   ;(define vk-fence (rkm-fence-vk-fence fence))
   

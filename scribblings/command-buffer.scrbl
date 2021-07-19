@@ -16,14 +16,6 @@
           rkm-command-buffer?]{
     Crea un command buffer a partir de un command pool.
     Si @racket[secondary-buffer] vale @racket[#t], el buffer será secundario. En otro caso será primario.
-
-    El valor @racket[family-symbol] puede ser:
-    @itemlist[
-        @item{ @racket['graphics] : Colas de tipo graphic. }
-        @item{ @racket['transfer] : Colas de tipo transfer. }
-        @item{ @racket['compute] : Colas de tipo compute. }
-        @item{ @racket['present] : Colas de tipo present. }
-    ]
 }
 
 @defproc[(rkm-reset-command-buffer [command-buffer rkm-command-buffer?])

@@ -6,8 +6,7 @@
          ffi/unsafe/alloc)
 
 (provide (struct-out rkm-semaphore)
-         rkm-create-semaphore
-         (struct-out rkm-semaphore/stages))
+         rkm-create-semaphore)
 
 
 ; struct semaforo
@@ -45,10 +44,3 @@
 
 ; Allocator y destructor de un semaforo
 (define rkm-create-semaphore ((allocator destroy-semaphore) create-semaphore))
-
-
-
-; struct semaphore/stage
-(struct rkm-semaphore/stages
-  (semaphore
-   vk-stages))

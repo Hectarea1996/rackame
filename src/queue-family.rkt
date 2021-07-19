@@ -3,6 +3,7 @@
 
 (require "cvar.rkt"
          "physical-device.rkt"
+         "surface.rkt"
          racket/bool
          vulkan/unsafe
          ffi/unsafe
@@ -46,7 +47,7 @@
     (for/or ([index (build-list (length vk-family-properties) values)] [property vk-family-properties])
         (if (and (implies (> queue-flags 0) (and (equal? (bitwise-and (VkQueueFamilyProperties-queueFlags property) queue-flags) queue-flags)
                                                  (implies exclusive-flags
-                                                         (equal? (bitwise-or (VkQueueFamilyProperties-queueFlags property) queue-flags)))))
+                                                         (equal? (bitwise-ior (VkQueueFamilyProperties-queueFlags property) queue-flags)))))
                  (implies vk-surface (let ([cv-present-queue (make-cvar _VkBool32)])
                                       (vkGetPhysicalDeviceSurfaceSupportKHR vk-physical-device index vk-surface (cvar-ptr cv-present-queue))
                                       (cvar-ref cv-present-queue)))
@@ -64,7 +65,7 @@
     (for/list ([index (build-list (length vk-family-properties) values)] [property vk-family-properties]
                #:when (and (implies (> queue-flags 0) (and (equal? (bitwise-and (VkQueueFamilyProperties-queueFlags property) queue-flags) queue-flags)
                                                  (implies exclusive-flags
-                                                         (equal? (bitwise-or (VkQueueFamilyProperties-queueFlags property) queue-flags)))))
+                                                         (equal? (bitwise-ior (VkQueueFamilyProperties-queueFlags property) queue-flags)))))
                            (implies vk-surface (let ([cv-present-queue (make-cvar _VkBool32)])
                                       (vkGetPhysicalDeviceSurfaceSupportKHR vk-physical-device index vk-surface (cvar-ptr cv-present-queue))
                                       (cvar-ref cv-present-queue)))

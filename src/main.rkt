@@ -4,11 +4,13 @@
          "instance.rkt"
          "window.rkt"
          "surface.rkt"
+         "physical-device.rkt"
          "device.rkt"
          "queue.rkt"
+         "queue-family.rkt"
          "command-pool.rkt"
-         "swapchain.rkt"
-         "device-submit.rkt")
+         "queue.rkt"
+         vulkan/unsafe)
 
 
 (glfw-init)
@@ -26,7 +28,9 @@
     (error 'main "No hay familias de colas soportadas"))
 (define device (rkm-create-device instance (rkm-create-physical-device-features) (list graphic-family)))
 (define graphic-queues (rkm-get-device-queues device graphic-family))
-(define swapchain (rkm-create-swapchain device window))
+
+
+;(define swapchain (rkm-create-swapchain device window))
 
 
 ;(rkm-destroy-swapchain swapchain)

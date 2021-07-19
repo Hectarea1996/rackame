@@ -408,7 +408,7 @@
       (if (and (implies type (check-type vk-physical-device type))
                (implies extensions (check-extension-support vk-physical-device extensions))
                (implies vk-surface (check-queue-family-support vk-physical-device queue-flags vk-surface))
-               (implies wanted-features (check-features vk-physical-device wanted-features))
+               (implies wanted-features (check-available-features vk-physical-device wanted-features))
                (implies vk-surface (check-surface-presentation-support vk-physical-device vk-surface)))
           vk-physical-device
           #f)))

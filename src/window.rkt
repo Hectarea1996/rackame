@@ -1,8 +1,7 @@
 #lang racket/base
 
 
-(require "surface.rkt"
-         glfw3/vulkan
+(require glfw3/vulkan
          ffi/unsafe/alloc)
 
 

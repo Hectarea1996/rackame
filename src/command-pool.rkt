@@ -2,6 +2,9 @@
 
 
 (require "cvar.rkt"
+         "device.rkt"
+         "queue-family.rkt"
+         ffi/unsafe/alloc
          vulkan/unsafe)
 
 
@@ -49,7 +52,7 @@
 ; Destruye un command pool
 (define (destroy-command-pool command-pool)
 
-  (define vk-command-pool (vk-command-pool-vk-command-pool command-pool))
+  (define vk-command-pool (rkm-command-pool-vk-command-pool command-pool))
   (define vk-device (rkm-command-pool-vk-device command-pool))
 
   (vkDestroyCommandPool vk-device vk-command-pool #f))
