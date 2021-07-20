@@ -10,10 +10,12 @@
          "queue-family.rkt"
          "command-pool.rkt"
          "queue.rkt"
+         "swapchain.rkt"
          vulkan/unsafe)
 
 
 (glfw-init)
+
 
 (define instance (rkm-create-instance #t))
 (define window (rkm-create-window "Hola" 640 480))
@@ -26,17 +28,15 @@
                           queue-family))
 (when (not graphic-family)
     (error 'main "No hay familias de colas soportadas"))
-(define device (rkm-create-device instance (rkm-create-physical-device-features) (list graphic-family)))
+(define device (rkm-create-device physical-device (rkm-create-physical-device-features) (list graphic-family)))
 (define graphic-queues (rkm-get-device-queues device graphic-family))
+(define swapchain (rkm-create-swapchain physical-device device surface (list graphic-family) 640 480))
 
+;vkCmdClearColorImage
+(define present-color
+    (let ([sem1 (rkm-create-semaphore device)])))
 
-;(define swapchain (rkm-create-swapchain device window))
-
-
-;(rkm-destroy-swapchain swapchain)
-;(rkm-destroy-device device)
-;(rkm-destroy-window window)
-;(rkm-destroy-instance instance)
+(sleep 3)
 
 (glfw-terminate)
 

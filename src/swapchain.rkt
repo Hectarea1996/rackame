@@ -3,8 +3,8 @@
 
 (require "physical-device.rkt"
          "device.rkt"
-         "window.rkt"
          "surface.rkt"
+         "queue-family.rkt"
          "cvar.rkt"
          ffi/unsafe
          ffi/unsafe/alloc
@@ -17,6 +17,9 @@
          (struct-out rkm-swapchain))
 
 
+; ----------------------------------------------------
+; ------------------- Estructuras --------------------
+; ----------------------------------------------------
 
 ; struct de un swapchain
 (struct rkm-swapchain
@@ -28,11 +31,13 @@
    images
    image-views))
 
-
 ; El maximo valor de un entero de 32 bits
 (define UINT32_MAX (- (expt 2 32) 1))
 
 
+; ----------------------------------------------------
+; ---------------- Funciones privadas ----------------
+; ----------------------------------------------------
 
 ; Devuelve un formato para el swapchain
 (define (choose-format vk-physical-device vk-surface)
@@ -70,20 +75,18 @@
 
 
 ; Devuelve unas dimensiones para el swapchain
-(define (choose-extent vk-physical-device vk-surface glfw-window)
+(define (choose-extent vk-physical-device vk-surface width height)
 
   (define surface-capabilities (get-surface-capabilities vk-physical-device vk-surface))
 
   (if (not (equal? (VkExtent2D-width (VkSurfaceCapabilitiesKHR-currentExtent surface-capabilities)) UINT32_MAX))
       (VkSurfaceCapabilitiesKHR-currentExtent surface-capabilities)
-      (let ([win-width (make-cvar _int)] [win-height (make-cvar _int)])
-        (glfwGetWindowSize glfw-window (cvar-ptr win-width) (cvar-ptr win-height))
         (make-VkExtent2D (max (VkExtent2D-width (VkSurfaceCapabilitiesKHR-minImageExtent surface-capabilities))
                               (min (VkExtent2D-width (VkSurfaceCapabilitiesKHR-maxImageExtent surface-capabilities))
-                                   (cast (cvar-ref win-width) _int _uint32)))
+                                   width))
                          (max (VkExtent2D-height (VkSurfaceCapabilitiesKHR-minImageExtent surface-capabilities))
                               (min (VkExtent2D-height (VkSurfaceCapabilitiesKHR-maxImageExtent surface-capabilities))
-                                   (cast (cvar-ref win-height) _int _uint32)))))))
+                                   height)))))
 
 
 
@@ -107,28 +110,25 @@
       (add1 (VkSurfaceCapabilitiesKHR-minImageCount surface-capabilities))))
 
 
-
 ; Crea un swapchain
-(define (create-swapchain device window)
+(define (create-swapchain physical-device device surface present-families width height)
 
   ;Obtenemos informacion preliminar
-  (define vk-physical-device (rkm-device-vk-physical-device device))
-  (define vk-surface (rkm-surface-vk-surface (rkm-window-surface window)))
+  (define vk-physical-device (rkm-physical-device-vk-physical-device physical-device))
+  (define vk-surface (rkm-surface-vk-surface surface))
   (define vk-device (rkm-device-vk-device device))
-  (define glfw-window (rkm-window-glfw-window window))
-  (define graphics-index (rkm-device-graphics-index device))
-  (define present-index (rkm-device-present-index device))
 
   (define format (choose-format vk-physical-device vk-surface))
   (define present-mode (choose-present-mode vk-physical-device vk-surface))
-  (define extent (choose-extent vk-physical-device vk-surface glfw-window))
+  (define extent (choose-extent vk-physical-device vk-surface width height))
   (define pre-transform (choose-pre-transform vk-physical-device vk-surface))
   (define image-count (choose-image-count vk-physical-device vk-surface))
 
-  (define-values (sharing-mode index-count indices)
-    (if (not (equal? graphics-index present-index))
-        (values VK_SHARING_MODE_CONCURRENT 2 (list->cblock `(,graphics-index ,present-index) _uint32))
-        (values VK_SHARING_MODE_EXCLUSIVE 0 #f)))
+  (define index-count (length present-families))
+  (define indices (cvector-ptr (list->cvector (map rkm-queue-family-index present-families) _uint32)))
+  (when (<= index-count 0)
+    (error 'create-swapchain "Expected 1 or more family queues."))
+  (define sharing-mode (if (> index-count 1) VK_SHARING_MODE_CONCURRENT VK_SHARING_MODE_EXCLUSIVE))
 
   ;Creamos el swapchain
   (define swapchain-info (make-VkSwapchainCreateInfoKHR VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR
@@ -150,10 +150,10 @@
                                                         VK_TRUE
                                                         #f))  ;Esto deberia ser VK_NULL_HANDLE
 
-  (define swapchain (make-cvar _VkSwapchainKHR))
-  (define swapchain-result (vkCreateSwapchainKHR vk-device swapchain-info #f (cvar-ptr swapchain)))
+  (define cv-swapchain (make-cvar _VkSwapchainKHR))
+  (define swapchain-result (vkCreateSwapchainKHR vk-device swapchain-info #f (cvar-ptr cv-swapchain)))
   (check-vkResult swapchain-result 'create-swapchain)
-  (define vk-swapchain (cvar-ref swapchain))
+  (define vk-swapchain (cvar-ref cv-swapchain))
 
   ;Obtenemos las imagenes
   (define true-image-count (make-cvar _uint32))
@@ -204,6 +204,9 @@
   (vkDestroySwapchainKHR vk-device vk-swapchain #f))
 
 
+; ----------------------------------------------------
+; ---------------- Funciones publicas ----------------
+; ----------------------------------------------------
 
 ; Allocator y destructor de un swapchain
 (define rkm-create-swapchain ((allocator destroy-swapchain) create-swapchain))

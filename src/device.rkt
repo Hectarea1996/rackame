@@ -62,7 +62,7 @@
                                                       vk-device-features))
 
   (define device (make-cvar _VkDevice))
-  (define device-result (vkCreateDevice physical-device device-create-info #f (cvar-ptr device)))
+  (define device-result (vkCreateDevice vk-physical-device device-create-info #f (cvar-ptr device)))
   (check-vkResult device-result 'create-device)
   (define vk-device (cvar-ref device))
 

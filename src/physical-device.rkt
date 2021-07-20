@@ -117,10 +117,14 @@
 ; --- Caracteristicas del dispositivo ---
 
 ; Comprueba la disponibilidad de las caracteristicas de un dispositivo
-(define (check-available-features vk-wanted-features vk-supported-features)
+(define (check-available-features vk-physical-device vk-wanted-features)
 
   (define (vk-implies vk-bool1 vk-bool2)
     (implies (equal? vk-bool1 VK_TRUE) (equal? vk-bool2 VK_TRUE)))
+
+  (define cv-supported-features (make-cvar _VkPhysicalDeviceFeatures))
+  (vkGetPhysicalDeviceFeatures vk-physical-device (cvar-ptr cv-supported-features))
+  (define vk-supported-features (cvar-ref cv-supported-features))
 
   (and (vk-implies (VkPhysicalDeviceFeatures-robustBufferAccess vk-wanted-features) (VkPhysicalDeviceFeatures-robustBufferAccess vk-supported-features))
        (vk-implies (VkPhysicalDeviceFeatures-fullDrawIndexUint32 vk-wanted-features) (VkPhysicalDeviceFeatures-fullDrawIndexUint32 vk-supported-features))
@@ -399,7 +403,7 @@
 
   (define vk-instance (rkm-instance-vk-instance instance))
   (define vk-surface (and surface (rkm-surface-vk-surface surface)))
-  (define vk-wanted-features (rkm-physical-device-features-vk-physical-device-features wanted-features))
+  (define vk-wanted-features (and wanted-features (rkm-physical-device-features-vk-physical-device-features wanted-features)))
 
   (define physical-devices (enumerate-physical-devices vk-instance))
 
@@ -408,7 +412,7 @@
       (if (and (implies type (check-type vk-physical-device type))
                (implies extensions (check-extension-support vk-physical-device extensions))
                (implies vk-surface (check-queue-family-support vk-physical-device queue-flags vk-surface))
-               (implies wanted-features (check-available-features vk-physical-device wanted-features))
+               (implies vk-wanted-features (check-available-features vk-physical-device vk-wanted-features))
                (implies vk-surface (check-surface-presentation-support vk-physical-device vk-surface)))
           vk-physical-device
           #f)))
