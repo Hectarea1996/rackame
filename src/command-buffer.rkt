@@ -96,21 +96,21 @@
 ; Macro para generar un command buffer listo para submit.
 (define-syntax (rkm-do-command-buffer stx)
   (syntax-case stx ()
-    [(_ device command-pool bodies ...) #'(let ([command-buffer (rkm-create-command-buffer device command-pool)])
-                                             (rkm-begin-command-buffer command-buffer VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT)
+    [(_ device command-pool buffer-name bodies ...) #'(let ([buffer-name (rkm-create-command-buffer device command-pool)])
+                                             (rkm-begin-command-buffer buffer-name VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT)
                                              bodies ...
-                                             (rkm-end-command-buffer command-buffer)
-                                             command-buffer)]))
+                                             (rkm-end-command-buffer buffer-name)
+                                             buffer-name)]))
 
 
 ; Macro para generar un command buffer que debe ser preparado para el submit usando la
 ; funcion que retorna.                             
 (define-syntax (rkm-do-command-buffer/proc stx)
   (syntax-case stx ()
-    [(_ (args ...) device command-pool bodies ...) #'(let ([command-buffer (rkm-create-command-buffer device command-pool)])
+    [(_ (args ...) device command-pool buffer-name bodies ...) #'(let ([buffer-name (rkm-create-command-buffer device command-pool)])
                                                         (values command-buffer
                                                                 (lambda (args ...)
-                                                                  (rkm-reset-command-buffer command-buffer)
-                                                                  (rkm-begin-command-buffer command-buffer VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT)
+                                                                  (rkm-reset-command-buffer buffer-name)
+                                                                  (rkm-begin-command-buffer buffer-name VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT)
                                                                   bodies ...
-                                                                  (rkm-end-command-buffer command-buffer))))]))
+                                                                  (rkm-end-command-buffer buffer-name))))]))

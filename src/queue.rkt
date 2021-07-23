@@ -9,7 +9,8 @@
          ffi/cvector
          (for-syntax racket/base))
 
-(provide rkm-get-device-queues
+(provide (struct-out rkm-queue)
+         rkm-get-device-queues
          rkm-lambda-submit)
 
 
@@ -148,20 +149,33 @@
 
 
 ; Devuelve todas las funciones que hay que ejecutar dentro de un rkm-lambda-submit
-(define-syntax (lambda-submit-aux stx)
+(define-for-syntax (lambda-submit-aux stx)
 
-  (define (transform-body device-stx args-stx stx)
-    (syntax-case stx (rkm-queue-submit)
-      [(rkm-queue-submit rest ...) #`(do-queue-submit #,args-stx #,device-stx rest ...)]
-      [expression #`(lambda #,args-stx expression)]))
+  (define (let-ids-bodies stx-bodies)
+    (let ([id-count (stx-foldl (lambda (init s) (syntax-case s (rkm-queue-submit)
+                                                  [(rkm-queue-submit rest ...) (add1 init)]
+                                                  [_ init])) 0 stx-bodies)])
+      (stx-genids id-count "submit")))
+
+  (define (change-submit-bodies stx-bodies stx-ids stx-args)
+    (syntax-case (stx-car stx-bodies) (rkm-queue-submit)
+      [() stx-null]
+      [(rkm-queue-submit rest ...) (stx-cons (stx-list* (stx-car stx-ids) stx-args) 
+                                             (change-submit-bodies (stx-cdr stx-bodies) (stx-cdr stx-ids) stx-args))]
+      [expression (stx-cons (stx-car stx-bodies) (change-submit-bodies (stx-cdr stx-bodies) stx-ids stx-args))]))
+
+  (define (submit-procs stx-bodies device-stx args-stx)
+    (syntax-case (stx-car stx-bodies) (rkm-queue-submit)
+      [() stx-null]
+      [(rkm-queue-submit rest ...) (stx-cons #`(do-queue-submit #,args-stx #,device-stx rest ...) 
+                                               (submit-procs (stx-cdr stx-bodies) device-stx args-stx))]
+      [expression (submit-procs (stx-cdr stx-bodies) device-stx args-stx)]))
   
   (syntax-case stx ()
-    [(lambda-submit-aux (args ...) device) #'(values '())]
-    [(lambda-submit-aux (args ...) device body bodies ...)
-        (let ([new-body (transform-body #'device #'(args ...) #'body)])
-          #`(let ([procs (lambda-submit-aux (args ...) device bodies ...)]
-                  [proc #,new-body])
-              (cons proc procs)))]))
+    [(lambda-submit-aux (args ...) device bodies ...) (let* ([ids (let-ids-bodies #'(bodies ...))]
+                                                             [new-bodies (change-submit-bodies #'(bodies ...))]
+                                                             [procs (submit-procs #'(bodies ...) #'device #'(args ...))])
+                                                        (values ids new-bodies procs))]))
 
 ; ----------------------------------------------------
 ; ---------------- Funciones publicas ----------------
@@ -183,7 +197,6 @@
 
   (syntax-case stx ()
     [(rkm-lambda-submit (args ...) device bodies ...)
-        #'(let ([procs (lambda-submit-aux (args ...) device bodies ...)])
-            (lambda (args ...)
-              (for ([proc procs])
-                (proc args ...))))]))
+        (let-values ([(ids new-bodies procs) (lambda-submit-aux #'(lambda-submit-aux (args ...) device bodies ...))])
+            #`(let-values ([#,ids #,procs])
+                (lambda (args ...) #,@new-bodies)))]))

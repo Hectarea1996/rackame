@@ -2,9 +2,12 @@
 
 
 (require "physical-device.rkt"
+         "semaphore.rkt"
          "device.rkt"
          "surface.rkt"
          "queue-family.rkt"
+         "queue.rkt"
+         "fence.rkt"
          "cvar.rkt"
          ffi/unsafe
          ffi/unsafe/alloc
@@ -33,6 +36,7 @@
 
 ; El maximo valor de un entero de 32 bits
 (define UINT32_MAX (- (expt 2 32) 1))
+(define UINT64_MAX (- (expt 2 64) 1))
 
 
 ; ----------------------------------------------------
@@ -108,6 +112,37 @@
            (>= (VkSurfaceCapabilitiesKHR-minImageCount surface-capabilities) (VkSurfaceCapabilitiesKHR-maxImageCount surface-capabilities)))
       (VkSurfaceCapabilitiesKHR-maxImageCount surface-capabilities)
       (add1 (VkSurfaceCapabilitiesKHR-minImageCount surface-capabilities))))
+
+
+; Devuelve la siguiente imagen disponible del swapchain
+(define (acquire-next-image vk-device vk-swapchain vk-semaphore vk-fence)
+
+  (define image-index (make-cvar _uint32))
+  (vkAcquireNextImageKHR vk-device vk-swapchain UINT64_MAX vk-semaphore vk-fence (cvar-ptr image-index))
+  
+  (cvar-ref image-index))
+
+
+; Presenta la imagen de un swapchain por pantalla
+(define (present-swapchain vk-queue vk-swapchain image-index vk-semaphore)
+
+  (define sem-count (if vk-semaphore 1 0))
+  (define vk-semaphore-ptr (cvar-ptr (cvar _VkSemaphore vk-semaphore)))
+  (define vk-swapchain-ptr (cvar-ptr (cvar _VkSwapchainKHR vk-swapchain)))
+  (define image-index-ptr (cvar-ptr (cvar _uint32 image-index)))
+  (define cv-present-result (make-cvar _VkResult))
+
+  (define present-info (make-VkPresentInfoKHR VK_STRUCTURE_TYPE_PRESENT_INFO_KHR
+                                              #f
+                                              sem-count
+                                              vk-semaphore-ptr
+                                              1
+                                              vk-swapchain-ptr
+                                              image-index-ptr
+                                              (cvar-ptr cv-present-result)))
+
+  (vkQueuePresentKHR vk-queue present-info)                                            
+  (check-vkResult (cvar-ref cv-present-result)))
 
 
 ; Crea un swapchain
@@ -211,3 +246,23 @@
 ; Allocator y destructor de un swapchain
 (define rkm-create-swapchain ((allocator destroy-swapchain) create-swapchain))
 
+
+; Devuelve la siguiente imagen disponible del swapchain
+(define (rkm-acquire-next-image device swapchain #:sempahore [semaphore #f] #:fence [fence #f])
+
+  (define vk-device (rkm-device-vk-device device))
+  (define vk-swapchain (rkm-swapchain-vk-swapchain swapchain))
+  (define vk-semaphore (and semaphore (rkm-semaphore-vk-semaphore semaphore)))
+  (define vk-fence (and fence (rkm-fence-vk-fence fence)))
+  
+  (acquire-next-image vk-device vk-swapchain vk-semaphore vk-fence))
+
+
+; Presenta la imagen de un swapchain por pantalla
+(define (rkm-present-swapchain queue swapchain image-index #:semaphore [semaphore #f])
+
+  (define vk-queue (rkm-queue-vk-queue queue))
+  (define vk-swapchain (rkm-swapchain-vk-swapchain swapchain))
+  (define vk-semaphore (and semaphore (rkm-semaphore-vk-semaphore semaphore)))
+  
+  (present-swapchain vk-queue vk-swapchain image-index vk-semaphore))
