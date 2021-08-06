@@ -3,8 +3,13 @@
 ;(require racket/draw)
 ; read-bitmap   save-file (method)   get-data-from-file (method)
 
-(require vulkan/unsafe
-         ffi/unsafe)
+(require "cvar.rkt"
+         "physical-device.rkt"
+         "device.rkt"
+         ffi/unsafe/cvector
+         vulkan/unsafe
+         ffi/unsafe
+         ffi/unsafe/alloc)
 
 
 
@@ -82,11 +87,11 @@
     (check-vkResult image-result)
     (define vk-image (cvar-ref cv-image))
     
-    (define vk-memory-requirements (get-image-memory-requirements device vk-image))
+    (define vk-memory-requirements (get-image-memory-requirements vk-device vk-image))
 
-    (define allocation-size (VkMemoryAllocateInfo-size vk-memory-requirements))
+    (define allocation-size (VkMemoryRequirements-size vk-memory-requirements))
     (define memory-type-index (get-memory-type-index vk-physical-device 
-                                                     (VkMemoryAllocateInfo-memoryTypeBits vk-memory-requirements)
+                                                     (VkMemoryRequirements-memoryTypeBits vk-memory-requirements)
                                                      properties))
     
     (define alloc-info (make-VkMemoryAllocateInfo VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO
@@ -95,11 +100,11 @@
                                                   memory-type-index))
 
     (define cv-memory (make-cvar _VkDeviceMemory))                                             
-    (define alloc-result (vkAllocateMemory device alloc-info #f (cvar-ptr cv-memory)))
+    (define alloc-result (vkAllocateMemory vk-device alloc-info #f (cvar-ptr cv-memory)))
     (check-vkResult alloc-result)
     (define vk-memory (cvar-ref cv-memory))
     
-    (vkBindImageMemory device vk-image vk-memory 0)
+    (vkBindImageMemory vk-device vk-image vk-memory 0)
     
     (values vk-image vk-memory))
 
