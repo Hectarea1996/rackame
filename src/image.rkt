@@ -12,6 +12,10 @@
          ffi/unsafe/alloc)
 
 
+(provide (struct-out rkm-image)
+         rkm-create-image)
+
+
 
 ; ----------------------------------------------------
 ; ------------------- Estructuras --------------------
