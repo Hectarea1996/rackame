@@ -50,7 +50,7 @@
   (define cv-submit-infos (list->cvector vk-submit-infos _VkSubmitInfo))
   (define submit-info-count (cvector-length cv-submit-infos))
   ;(define vk-fence (rkm-fence-vk-fence fence))
-  
+
   (define submit-result (vkQueueSubmit vk-queue submit-info-count (cvector-ptr cv-submit-infos) vk-fence))
   (check-vkResult submit-result 'rkm-queue-submit))
 
@@ -91,30 +91,30 @@
       [(rkm-do-command-buffer rest ...) (if (dynamic? args-stx #'(rest ...))
                                             #`(rkm-do-command-buffer/proc #,args-stx #,device-stx #,reset-pool-stx rest ...)
                                             #`(values (rkm-do-command-buffer #,device-stx #,pool-stx rest ...) #f))]))
-  
+
   (syntax-case stx ()
     [(do-vk-submit-info-aux (args ...) device pool reset-pool) #'(values '() '())]
     [(do-vk-submit-info-aux (args ...) device pool reset-pool body bodies ...)
-        (let ([new-body (transform-body #'device #'(args ...) #'pool #'reset-pool #'body)])
-          #`(let-values ([(command-buffers procs) (do-vk-submit-info-aux (args ...) device pool reset-pool bodies ...)]
-                         [(command-buffer proc) #,new-body])
-              (values (cons command-buffer command-buffers) (if proc 
-                                                                (cons proc procs)
-                                                                procs))))]))
+     (let ([new-body (transform-body #'device #'(args ...) #'pool #'reset-pool #'body)])
+       #`(let-values ([(command-buffers procs) (do-vk-submit-info-aux (args ...) device pool reset-pool bodies ...)]
+                      [(command-buffer proc) #,new-body])
+           (values (cons command-buffer command-buffers) (if proc
+                                                             (cons proc procs)
+                                                             procs))))]))
 
 
 ; Macro para crear un submit info junto con las funciones que actualizan los command-buffers
 (define-syntax (do-vk-submit-info stx)
-  
+
   (syntax-case stx ()
     [(do-vk-submit-info (args ...) device wait-sems wait-stages signal-sems pool reset-pool bodies ...)
-        #'(let-values ([(command-buffers procs) 
-                        (do-vk-submit-info-aux (args ...) device pool reset-pool bodies ...)])
-            (let ([vk-command-buffers (map (lambda (cb)
-                                             (cvar-ref (rkm-command-buffer-cv-command-buffer cb))) command-buffers)]
-                  [vk-wait-sems (map rkm-semaphore-vk-semaphore wait-sems)]
-                  [vk-signal-sems (map rkm-semaphore-vk-semaphore signal-sems)])
-              (values (create-vk-submit-info vk-wait-sems wait-stages vk-signal-sems vk-command-buffers) procs)))]))
+     #'(let-values ([(command-buffers procs)
+                     (do-vk-submit-info-aux (args ...) device pool reset-pool bodies ...)])
+         (let ([vk-command-buffers (map (lambda (cb)
+                                          (cvar-ref (rkm-command-buffer-cv-command-buffer cb))) command-buffers)]
+               [vk-wait-sems (map rkm-semaphore-vk-semaphore wait-sems)]
+               [vk-signal-sems (map rkm-semaphore-vk-semaphore signal-sems)])
+           (values (create-vk-submit-info vk-wait-sems wait-stages vk-signal-sems vk-command-buffers) procs)))]))
 
 
 ; Macro auxiliar para crear un submit info junto con las funciones que actualizan los command-buffers
@@ -123,29 +123,29 @@
   (define (transform-body device-stx args-stx stx)
     (syntax-case stx (rkm-do-submit-info)
       [(rkm-do-submit-info rest ...) #`(do-vk-submit-info #,args-stx #,device-stx rest ...)]))
-  
+
   (syntax-case stx ()
     [(do-queue-submit-aux (args ...) device queue fence) #'(values '() '())]
     [(do-queue-submit-aux (args ...) device queue fence body bodies ...)
-        (let ([new-body (transform-body #'device #'(args ...) #'body)])
-          #`(let-values ([(vk-submit-infos procs) (do-queue-submit-aux (args ...) device queue fence bodies ...)]
-                         [(vk-submit-info new-procs) #,new-body])
-              (values (cons vk-submit-info vk-submit-infos) (append new-procs procs))))]))
+     (let ([new-body (transform-body #'device #'(args ...) #'body)])
+       #`(let-values ([(vk-submit-infos procs) (do-queue-submit-aux (args ...) device queue fence bodies ...)]
+                      [(vk-submit-info new-procs) #,new-body])
+           (values (cons vk-submit-info vk-submit-infos) (append new-procs procs))))]))
 
 
 ; Macro que crea una funcion que regraba los command buffers
-; y tambien envia los submit infos a una cola (submit). 
+; y tambien envia los submit infos a una cola (submit).
 (define-syntax (do-queue-submit stx)
-  
+
   (syntax-case stx ()
     [(do-queue-submit (args ...) device queue fence bodies ...)
-        #'(let-values ([(vk-submit-infos procs) (do-queue-submit-aux (args ...) device queue fence bodies ...)])
-            (let ([vk-queue (rkm-queue-vk-queue queue)]
-                  [vk-fence (rkm-fence-vk-fence fence)])
-              (lambda (args ...)
-                (for ([proc procs])
-                  (proc args ...))
-                (queue-submit vk-queue vk-submit-infos vk-fence))))]))
+     #'(let-values ([(vk-submit-infos procs) (do-queue-submit-aux (args ...) device queue fence bodies ...)])
+         (let ([vk-queue (rkm-queue-vk-queue queue)]
+               [vk-fence (rkm-fence-vk-fence fence)])
+           (lambda (args ...)
+             (for ([proc procs])
+               (proc args ...))
+             (queue-submit vk-queue vk-submit-infos vk-fence))))]))
 
 
 ; Devuelve todas las funciones que hay que ejecutar dentro de un rkm-lambda-submit
@@ -160,17 +160,17 @@
   (define (change-submit-bodies stx-bodies stx-ids stx-args)
     (syntax-case (stx-car stx-bodies) (rkm-queue-submit)
       [() stx-null]
-      [(rkm-queue-submit rest ...) (stx-cons (stx-list* (stx-car stx-ids) stx-args) 
+      [(rkm-queue-submit rest ...) (stx-cons (stx-list* (stx-car stx-ids) stx-args)
                                              (change-submit-bodies (stx-cdr stx-bodies) (stx-cdr stx-ids) stx-args))]
       [expression (stx-cons (stx-car stx-bodies) (change-submit-bodies (stx-cdr stx-bodies) stx-ids stx-args))]))
 
   (define (submit-procs stx-bodies device-stx args-stx)
     (syntax-case (stx-car stx-bodies) (rkm-queue-submit)
       [() stx-null]
-      [(rkm-queue-submit rest ...) (stx-cons #`(do-queue-submit #,args-stx #,device-stx rest ...) 
+      [(rkm-queue-submit rest ...) (stx-cons #`(do-queue-submit #,args-stx #,device-stx rest ...)
                                                (submit-procs (stx-cdr stx-bodies) device-stx args-stx))]
       [expression (submit-procs (stx-cdr stx-bodies) device-stx args-stx)]))
-  
+
   (syntax-case stx ()
     [(lambda-submit-aux (args ...) device bodies ...) (let* ([ids (let-ids-bodies #'(bodies ...))]
                                                              [new-bodies (change-submit-bodies #'(bodies ...))]
@@ -183,11 +183,11 @@
 
 ; Devuelve las colas de una familia de colas
 (define (rkm-get-device-queues device queue-family)
-  
+
   (define vk-device (rkm-device-vk-device device))
   (define index-family (rkm-queue-family-index queue-family))
   (define queue-count (rkm-queue-family-queue-count queue-family))
-  
+
   (get-device-queues vk-device index-family queue-count))
 
 
@@ -197,6 +197,6 @@
 
   (syntax-case stx ()
     [(rkm-lambda-submit (args ...) device bodies ...)
-        (let-values ([(ids new-bodies procs) (lambda-submit-aux #'(lambda-submit-aux (args ...) device bodies ...))])
-            #`(let-values ([#,ids #,procs])
-                (lambda (args ...) #,@new-bodies)))]))
+     (let-values ([(ids new-bodies procs) (lambda-submit-aux #'(lambda-submit-aux (args ...) device bodies ...))])
+         #`(let-values ([#,ids #,procs])
+             (lambda (args ...) #,@new-bodies)))]))

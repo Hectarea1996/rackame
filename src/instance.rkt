@@ -36,7 +36,7 @@
   (vkEnumerateInstanceLayerProperties (cvar-ptr count) #f)
   (define properties (make-cvector _VkLayerProperties (cvar-ref count)))
   (vkEnumerateInstanceLayerProperties (cvar-ptr count) (cvector-ptr properties))
-  
+
   ; Comprobamos que los layers requeridos estan disponibles
   (for/and ([required-layer required-layers])
     (for/or ([property (cvector->list properties)])

@@ -3,5 +3,4 @@
 
 (define-syntax (draw stx)
   (syntax-case stx ()
-    [(draw ) #'(begin
-                 )]))
+    [(draw ) #'(begin)]))

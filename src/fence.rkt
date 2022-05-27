@@ -1,6 +1,6 @@
 #lang racket/base
 
-(require "device.rkt" 
+(require "device.rkt"
          "cvar.rkt"
          vulkan/unsafe
          ffi/unsafe/alloc
@@ -31,11 +31,11 @@
     (define vk-fence-info (make-VkFenceCreateInfo VK_STRUCTURE_TYPE_FENCE_CREATE_INFO
                                                   #f
                                                   (if signaled VK_FENCE_CREATE_SIGNALED_BIT 0)))
-                                                  
+
     (define cv-fence (make-cvar _VkFence))
     (define fence-result (vkCreateFence vk-device vk-fence-info #f (cvar-ptr cv-fence)))
     (check-vkResult fence-result)
-    
+
     (rkm-fence vk-device cvar-ref cv-fence))
 
 
@@ -54,21 +54,21 @@
 
 
 (define (rkm-reset-fence fence)
-    
+
     (define vk-device (rkm-fence-vk-device fence))
     (define vk-fence (rkm-fence-vk-fence fence))
     (define cv-fence (cvar _VkFence vk-fence))
-    
+
     (define reset-result (vkResetFences vk-device 1 (cvar-ptr cv-fence)))
     (check-vkResult reset-result))
 
 
 (define (rkm-reset-fences fences)
-    
+
     (define vk-device (rkm-fence-vk-device (car fences)))
     (define vk-fences (map rkm-fence-vk-fence fences))
     (define cv-fences (list->cvector fences _VkFence))
-    
+
     (define reset-result (vkResetFences vk-device (cvector-length cv-fences) (cvector-ptr cv-fences)))
     (check-vkResult reset-result))
 
@@ -79,7 +79,7 @@
     (define vk-device (rkm-fence-vk-device fence))
     (define vk-fence (rkm-fence-vk-fence fence))
     (define cv-fence (cvar _VkFence vk-fence))
-    
+
     (define wait-result (vkWaitForFences vk-device 1 (cvar-ptr cv-fence) VK_TRUE timeout))
     (check-vkResult wait-result))
 
@@ -89,6 +89,6 @@
     (define vk-device (rkm-fence-vk-device (car fences)))
     (define vk-fences (map rkm-fence-vk-fence fences))
     (define cv-fences (list->cvector fences _VkFence))
-    
+
     (define wait-result (vkWaitForFences vk-device (cvector-length cv-fences) (cvector-ptr cv-fences) (if waitAll VK_TRUE VK_FALSE) timeout))
     (check-vkResult wait-result))

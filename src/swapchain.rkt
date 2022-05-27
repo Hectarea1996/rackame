@@ -85,12 +85,12 @@
 
   (if (not (equal? (VkExtent2D-width (VkSurfaceCapabilitiesKHR-currentExtent surface-capabilities)) UINT32_MAX))
       (VkSurfaceCapabilitiesKHR-currentExtent surface-capabilities)
-        (make-VkExtent2D (max (VkExtent2D-width (VkSurfaceCapabilitiesKHR-minImageExtent surface-capabilities))
-                              (min (VkExtent2D-width (VkSurfaceCapabilitiesKHR-maxImageExtent surface-capabilities))
-                                   width))
-                         (max (VkExtent2D-height (VkSurfaceCapabilitiesKHR-minImageExtent surface-capabilities))
-                              (min (VkExtent2D-height (VkSurfaceCapabilitiesKHR-maxImageExtent surface-capabilities))
-                                   height)))))
+      (make-VkExtent2D (max (VkExtent2D-width (VkSurfaceCapabilitiesKHR-minImageExtent surface-capabilities))
+                            (min (VkExtent2D-width (VkSurfaceCapabilitiesKHR-maxImageExtent surface-capabilities))
+                                 width))
+                       (max (VkExtent2D-height (VkSurfaceCapabilitiesKHR-minImageExtent surface-capabilities))
+                            (min (VkExtent2D-height (VkSurfaceCapabilitiesKHR-maxImageExtent surface-capabilities))
+                                 height)))))
 
 
 
@@ -119,7 +119,7 @@
 
   (define image-index (make-cvar _uint32))
   (vkAcquireNextImageKHR vk-device vk-swapchain UINT64_MAX vk-semaphore vk-fence (cvar-ptr image-index))
-  
+
   (cvar-ref image-index))
 
 
@@ -141,7 +141,7 @@
                                               image-index-ptr
                                               (cvar-ptr cv-present-result)))
 
-  (vkQueuePresentKHR vk-queue present-info)                                            
+  (vkQueuePresentKHR vk-queue present-info)
   (check-vkResult (cvar-ref cv-present-result)))
 
 
@@ -254,7 +254,7 @@
   (define vk-swapchain (rkm-swapchain-vk-swapchain swapchain))
   (define vk-semaphore (and semaphore (rkm-semaphore-vk-semaphore semaphore)))
   (define vk-fence (and fence (rkm-fence-vk-fence fence)))
-  
+
   (acquire-next-image vk-device vk-swapchain vk-semaphore vk-fence))
 
 
@@ -264,5 +264,5 @@
   (define vk-queue (rkm-queue-vk-queue queue))
   (define vk-swapchain (rkm-swapchain-vk-swapchain swapchain))
   (define vk-semaphore (and semaphore (rkm-semaphore-vk-semaphore semaphore)))
-  
+
   (present-swapchain vk-queue vk-swapchain image-index vk-semaphore))
